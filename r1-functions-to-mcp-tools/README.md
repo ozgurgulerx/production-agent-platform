@@ -74,8 +74,9 @@ Status as of 2026-10-14, based on the local workspace and the checks recorded be
 | OpenAI Agents SDK agent | Implemented; one live run completed | Correct answer and a tool-call log; exact tool arguments were not captured |
 | Automated LLM agent tests | Planned | Tool selection and answer grounding still need explicit checks |
 
-The server changes, agent script, and test changes are still uncommitted at this
-checkpoint. The local work described here is ahead of the published code.
+The server, agent script, and tests are included with this implementation. The
+latest full-source check passed all 16 tests but measured 76.47% coverage, below
+the required 80%, because the agent has no automated tests yet.
 
 ## Files and responsibilities
 
@@ -542,9 +543,8 @@ agent scenarios. The current script handles one hardcoded question per run;
 interactive input and conversation history have not been added.
 
 Before treating R1 as independently reproducible, reconcile its stage dependencies
-with the shared environment used here. Before publishing the implementation,
-review and commit the pending code and tests. Documentation edits do not publish
-those files automatically.
+with the shared environment used here. Add meaningful automated agent tests to
+bring full-source coverage above the required 80%.
 
 Other gaps from the original brief remain visible: read-only annotations,
 descriptions that explain missing-ID behaviour, and a separate server `main()`

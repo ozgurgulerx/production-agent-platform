@@ -11,8 +11,6 @@ def test_get_policy():
     policy = get_policy("POL-DATA-01")
     assert policy["id"] == "POL-DATA-01"
 
-
-
 def test_list_open_tickets():
       result = list_tickets(status="open")
 
