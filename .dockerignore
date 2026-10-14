@@ -1,8 +1,0 @@
-.venv/
-.git/
-node_modules/
-R1-tickets-mcp/
-tests/
-docs/
-.*_cache/
-__pycache__/

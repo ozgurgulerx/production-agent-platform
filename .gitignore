@@ -1,21 +1,32 @@
-node_modules/
-.DS_Store
+# Environments, caches, and generated output
 .venv/
 venv/
+node_modules/
 __pycache__/
 *.py[cod]
 .pytest_cache/
 .ruff_cache/
 .mypy_cache/
 .coverage
+.coverage.*
 htmlcov/
+coverage.xml
+.DS_Store
+
+# Private local state and credentials
+.local/
 .env
 .env.*
 !.env.example
 !.env.sample
+.aws/
+credentials.json
+*credentials*.json
+*.pem
+*.key
 
-# Old R1 folder, superseded by src/pap/tools/ (contains an empty nested .git); delete it by hand.
+# Existing local legacy folder; preserve ignored contents
 R1-tickets-mcp/
 
-# Local star-watch snapshots and email delivery receipts.
-.local/github-star-mail/
+# Local compatibility link for the installed personal skill
+/skills/github-star-mail
