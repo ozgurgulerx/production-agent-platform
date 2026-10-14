@@ -218,9 +218,9 @@ the launching terminal when finished.
 
 Existing ticket: `get_ticket` with `ticket_id="T-1001"` returns the ticket details.
 
-![Inspector returning ticket T-1001](docs/evidence/screenshots/mcp-ticket-found.png)
+![Inspector returning ticket T-1001](docs/evidence/screenshots/mcp-ticket-found-cropped.png)
 
 Unknown ticket: `get_ticket` with `ticket_id="DOES-NOT-EXIST"` returns the expected
 `not_found` dictionary.
 
-![Inspector returning not_found for an unknown ticket](docs/evidence/screenshots/mcp-ticket-not-found.png)
+![Inspector returning not_found for an unknown ticket](docs/evidence/screenshots/mcp-ticket-not-found-cropped.png)
