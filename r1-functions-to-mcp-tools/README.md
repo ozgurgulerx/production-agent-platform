@@ -8,6 +8,39 @@ FastMCP handles MCP requests and responses; our functions still do the actual
 work. It does not choose which tool to call—the client, or an AI model through
 the client, makes that choice.
 
+### What our FastMCP server actually does
+
+Our server is a running Python process that lets an MCP client use our ticket
+functions. In this project, it communicates over **stdio**: the client sends
+protocol messages through the process's standard input and reads responses from
+its standard output. We do not need to expose an HTTP endpoint for this setup.
+
+1. **Advertises tools.** When the client asks for the tool list, the server returns
+   the names, descriptions, and input schemas of our three registered tools.
+2. **Receives a tool call.** For example, Inspector requests `get_ticket` with
+   `{"ticket_id": "T-1001"}`. This is a structured request, not natural language.
+3. **Validates and dispatches.** FastMCP checks the arguments against the tool's
+   declared input types and calls the registered wrapper in `server.py`.
+4. **Runs our existing logic.** The wrapper calls `functions.get_ticket("T-1001")`,
+   which reads the JSON fixture and returns the matching ticket or a `not_found`
+   dictionary.
+5. **Returns an MCP response.** FastMCP packages the Python result into a protocol
+   response and sends it back to the client.
+
+```text
+Inspector or an agent application's MCP client
+    → get_ticket request with ticket_id="T-1001"
+    → FastMCP tool wrapper in server.py
+    → lookup logic in functions.py
+    → result packaged as an MCP response
+    → client receives the ticket or not_found result
+```
+
+The server does not interpret a user's question or decide whether a refund should
+be issued. It exposes the operations we registered and executes the requested
+one. With Inspector, we choose the call manually; with an agent, the model can
+choose it and the agent application sends it through the MCP client.
+
 From this folder, activate the shared root environment with `source ../.venv/bin/activate`. Run tests with `python -m pytest --cov=src --cov-report=term-missing --cov-fail-under=80`. See the root README for dependency installation.
 
 
