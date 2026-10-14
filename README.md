@@ -11,7 +11,7 @@ Status changes only with a number sourced to a run. Full table with goals and we
 | Stage | What ships | Evidence | Status |
 |---|---|---|---|
 | S0 Scaffold | uv project, CI, Dockerfile, pre-commit, ADR-0001 | `make lint test` runs | done |
-| S1 MCP tools | `support-tickets` MCP server, 3 read-only tools | 3 tools, 6 tests, Inspector verified | planned |
+| S1 MCP tools | `support-tickets` MCP server, 3 read-only tools | 14 passed: `uv run pytest -q` ([tests](tests/unit/test_mcp_server.py)); Inspector pending | in progress |
 | S2 Bounded agent | Agents SDK agent, guardrails, sessions, tracing | 10/10 scripted tasks | planned |
 | S3 RAG + eval gate | hybrid + RRF retrieval, golden set, promptfoo gate | nDCG@10, Recall@20 | planned |
 | S4 Orchestration + HITL | durable execution, approval on refunds > 500 GBP, injection suite | injection 10/10 | planned |
@@ -36,7 +36,8 @@ make inspector      # MCP Inspector (needs Node >= 22)
 docker build -t production-agent-platform . && docker run -i --rm production-agent-platform
 ```
 
-S1 tool bodies are not written yet, so the MCP tests are marked `xfail` until they are.
+The three S1 tool bodies are implemented. The in-memory MCP contract suite passes;
+Inspector screenshots are still pending.
 
 ## Related
 

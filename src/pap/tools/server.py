@@ -1,4 +1,4 @@
-"""support-tickets MCP server shell (S1). Tool bodies are written by Ozgur, not Claude."""
+"""Read-only support-tickets MCP server (S1)."""
 
 import json
 import logging
@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Any, Literal
 
 from mcp.server.mcpserver import MCPServer
+from mcp.server.mcpserver.exceptions import ToolError
 from mcp.types import ToolAnnotations
 from pydantic import BaseModel
 
@@ -64,7 +65,15 @@ def list_tickets(
     Use this first to discover ticket ids. Use get_ticket when you already
     have an id and need the full record. limit must be 1..50.
     """
-    raise NotImplementedError("S1: Ozgur writes this body")
+    if not 1 <= limit <= 50:
+        raise ToolError("limit must be 1..50")
+    return [
+        TicketSummary(
+            id=ticket.id, priority=ticket.priority, status=ticket.status, subject=ticket.subject
+        )
+        for ticket in TICKETS
+        if status is None or ticket.status == status
+    ][:limit]
 
 
 @mcp.tool(annotations=READ_ONLY)
@@ -73,7 +82,10 @@ def get_ticket(ticket_id: str) -> Ticket:
 
     Use this when you already have an id; otherwise call list_tickets first.
     """
-    raise NotImplementedError("S1: Ozgur writes this body")
+    for ticket in TICKETS:
+        if ticket.id == ticket_id:
+            return ticket
+    raise ToolError("unknown ticket id; call list_tickets first")
 
 
 @mcp.tool(annotations=READ_ONLY)
@@ -82,7 +94,10 @@ def get_policy(policy_id: str) -> Policy:
 
     Use this to quote the rule that applies to a ticket.
     """
-    raise NotImplementedError("S1: Ozgur writes this body")
+    for policy in POLICIES:
+        if policy.id == policy_id:
+            return policy
+    raise ToolError("unknown policy id; ids look like POL-REFUND-01")
 
 
 if __name__ == "__main__":

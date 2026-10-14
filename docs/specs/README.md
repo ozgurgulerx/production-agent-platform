@@ -5,7 +5,7 @@ Each stage has a contract in its SPEC (`SN-*.md`). Existing Claude Code prompts 
 | Stage | Week | Ships | Evidence line | Goals | Status |
 |---|---|---|---|---|---|
 | S0 Scaffold | wk1 | pyproject, CI, Dockerfile, pre-commit, README stage table, ADR-0001, CLAUDE.md, data/ | CI green; `make test` runs | M.12 | done |
-| S1 MCP tools | wk1 | support-tickets MCP server (3 tools, 6 tests, Inspector screenshots) | 3 tools, 6 tests, Inspector verified | G1.1 | planned |
+| S1 MCP tools | wk1 | support-tickets MCP server (3 tools, contract tests, Inspector screenshots) | 14 passed: `uv run pytest -q` ([tests](../../tests/unit/test_mcp_server.py)); Inspector pending | G1.1 | in progress |
 | S2 Bounded agent | wk1-2 | Agents SDK agent: step budget, allowlist, structured output, guardrails, sessions, tracing; 10 scripted tasks | 10/10 scripted tasks; trace screenshot | G1.1, G2.5 | planned |
 | S3 RAG + eval gate | wk2 | Policy RAG: chunking, hybrid + RRF, reranker, ACL trimming; golden set 50; promptfoo CI gate; judge calibrated vs 30 labels; GraphRAG cost | nDCG@10, Recall@20, judge agreement, graph-build cost | G2.1, G2.2 | planned |
 | S4 Orchestration + HITL + injection | wk4 | Orchestrator-workers, evaluator-optimiser; durable execution; human approval > 500 GBP; 10 injection tests; LangGraph twin | injection 10/10; kill-and-resume demo | G4.1, G4.2 | planned |
