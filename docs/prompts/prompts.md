@@ -1,0 +1,38 @@
+# Claude Code stage prompts
+
+Paste at the repo root after `git checkout -b sN/<name>`. Shape: read the SPEC, plan, tests first, implement, run, stop before commit. P-reps and P-profile belong to other repos and are not kept here.
+
+## P0 Scaffold (S0, done)
+Read CLAUDE.md. This repo is at S0. Plan first, then: (1) move R1-tickets-mcp/ to src/pap/tools/ keeping its SPEC.md as docs/prompts/S1-mcp-tools.md; (2) root pyproject.toml as a uv project with ruff, mypy --strict, pytest (pythonpath = ["src"]), pre-commit; (3) .github/workflows/ci.yml running ruff, mypy, pytest on push and PR; (4) Dockerfile (python:3.12-slim, uv, non-root, CMD runs the MCP server over stdio) and a Makefile with test, lint, run-mcp, inspector; (5) README.md with the positioning line, the S0-S10 stage table from docs/prompts/README.md with every status "planned" except S0 "done", an architecture placeholder, how to run; (6) docs/adr/0001-one-flagship-repo.md recording this decision with a "revisit when". Do not write any tool or agent code. Run make lint test and show output. Stop before commit.
+
+## P1 MCP tools (S1)
+Read CLAUDE.md and docs/prompts/S1-mcp-tools.md. Plan first. Write tests/unit/test_mcp_server.py from SPEC section 6 using the SDK in-memory client. Then write only the server shell in src/pap/tools/server.py: MCPServer("support-tickets"), data loading, logging to stderr, run(). Leave the three tool bodies as signatures with docstrings and raise NotImplementedError; Ozgur writes the bodies. Run pytest and show the failures. Update README S1 status to "in build". Stop before commit.
+
+Follow-up after he writes the bodies: "Review my diff on src/pap/tools/server.py line by line: correctness against the SPEC contract, error messages, readOnlyHint annotations, anything that could print to stdout. Do not rewrite; list findings."
+
+## P2 Bounded agent (S2)
+Read CLAUDE.md. Write docs/prompts/S2-bounded-agent.md as a SPEC with: Agents SDK Agent + Runner; the three MCP tools via MCP-server tool integration; a step budget of 8; a tool allowlist; output_type pydantic model {answer, policy_ids, needs_human: bool, reason}; an input guardrail that rejects requests containing card or NI number patterns; an output guardrail that fails if answer contains digits matching a card pattern; SQLite sessions; tracing on; 10 scripted tasks in tests/eval/scripted_tasks.json with expected policy_ids and needs_human. Wait for approval of the SPEC. Then write the tests and the agent wiring, leaving the guardrail functions and the task-runner loop as signatures; those are Ozgur's. Run pytest. Stop before commit.
+
+## P3 RAG + eval gate (S3)
+Read CLAUDE.md. SPEC first (docs/prompts/S3-rag-eval-gate.md): 25 policy docs in data/policies/; chunking (recursive, 400 tokens, 15% overlap) with chunk ids stable across re-runs; BM25 + Azure AI Search vector + RRF; reranker behind an interface; ACL field per chunk trimmed at query time; golden set of 50 Q/A in evals/golden/; promptfoo config in evals/ with an nDCG@10 and groundedness threshold that fails CI; LLM judge calibrated against 30 hand labels with agreement reported; a GraphRAG section (entity extraction + community summaries, local vs global) with graph-build cost measured. Wait for approval. Then: tests first, the ingestion and index adapters, the promptfoo config and CI step. Leave rrf_merge() and the ACL-trim function as signatures. Produce docs/evidence/eval-report.md template with empty cells; numbers only from runs. Stop before commit.
+
+## P4 Orchestration, durable execution, HITL, injection suite (S4)
+Read CLAUDE.md. SPEC first: orchestrator-workers for multi-ticket questions; evaluator-optimiser on the final answer; durable execution with a checkpointer so the run resumes after the process is killed; human-approval interrupt when amount_disputed > 500; 10 prompt-injection tests in tests/security/ each with the exploit shown first in a comment and the mitigation asserted; a LangGraph twin of S2 under src/pap/orchestration/langgraph_twin.py with an ADR comparing the two. Wait for approval. Tests first; wiring; leave the approval-gate decision function and the injection mitigations as signatures. Record the kill-and-resume demo steps in the README. Stop before commit.
+
+## P5 API + OAuth (S5)
+Read CLAUDE.md. SPEC first: FastAPI layer in src/pap/api/ exposing /ask and /tickets; Entra ID bearer auth; rate limiting; timeouts; idempotency key on /ask; pagination on /tickets; the MCP server also served over Streamable HTTP with OAuth 2.1 per the MCP authorization spec, one scope per tool, audit log of every tool call with subject and scope; OWASP API Security Top 10 checklist in docs/architecture/api-security.md with each item marked implemented/accepted-risk. Wait for approval. Tests first (auth failures, scope mismatch, idempotency replay). Leave the scope-check middleware body as a signature. Stop before commit.
+
+## P6 Observability and the numbers (S6)
+Read CLAUDE.md. Add tracing with [Langfuse|LangSmith]; the choice is in ADR-000N; use it. Emit OTel GenAI semantic-convention attributes on model, retrieval and tool spans, plus release_id. Add scripts/measure.py that runs the 10 scripted tasks 20 times and writes docs/evidence/production-evidence.md with cost per 1k requests (Azure OpenAI pricing page cited), p50/p95 latency, tokens per task, judge score, every number linked to the run file. Add the fallback path (smaller model on timeout; human-review queue on guardrail fail) and a test for each. Stop before commit.
+
+## P7 Azure and Foundry (S7)
+Read CLAUDE.md. Rebuild S2 on Foundry Agent Service under src/pap/agent/foundry/ with the same three tools and the same 10 scripted tasks; write docs/architecture/foundry-vs-sdk.md. Write infra/azure/ (Bicep) for the A1 landing-zone shape at design level: resource group, VNet, Private Link to Azure OpenAI and AI Search, APIM, Key Vault, Log Analytics; CI runs az bicep build only. Add the PTU vs pay-as-you-go note to docs/architecture/nfr-budget.md. Stop before commit.
+
+## P8 Governance and architecture packs (S8)
+Read CLAUDE.md. From the Blueprint's templates, create skeletons only (headings, tables with empty cells, the questions each section must answer) for docs/governance/ (EU AI Act Art. 5-6, 9-15, 50-55 and Annex III mapping; NIST AI RMF + AI 600-1; ISO 42001 control list; DPIA for this platform; system card; PRA SS1/23 and FCA model-risk expectations) and docs/architecture/ (HLD, LLD, target/transition, NFR budget, threat model with DFD and trust boundaries, rollout/rollback, handover; five ADRs listed by title). Do not fill the content; Ozgur writes the packs. Add a docs/review-board/ deck outline (10 slides). Stop before commit.
+
+## P9 Release (S9)
+Read CLAUDE.md. Add docs/evidence/release-manifest.yaml generated by scripts/release_manifest.py from git commit, uv.lock hash, prompt hashes, embedding and generation model ids, index snapshot id, eval run id, container digest; CI job on tag v* that builds the image, produces an SBOM (syft) and the manifest, and attaches both to the GitHub release. Add the demo script (3-minute proof, 10-minute review) to docs/evidence/demo.md. Stop before commit.
+
+## P10 Bedrock note (S10)
+Read CLAUDE.md. Write docs/architecture/foundry-vs-bedrock.md: for each platform component (identity, tool hosting, knowledge base, guardrails, agent runtime, evals, tracing, cost model) the Azure service used in this repo and the Bedrock equivalent (AgentCore, Knowledge Bases, Guardrails) with links; a migration-effort table; three ADR-style "we would choose Bedrock when..." statements. No code unless the week has room; if it has, an src/pap/agent/bedrock/ adapter running the same 10 scripted tasks. Stop before commit.
