@@ -1,0 +1,13 @@
+{
+  "name": "python0x-dev-tools",
+  "private": true,
+  "scripts": {
+    "inspector": "mcp-inspector"
+  },
+  "engines": {
+    "node": ">=22.19.0"
+  },
+  "devDependencies": {
+    "@modelcontextprotocol/inspector": "2.10.1"
+  }
+}
