@@ -26,7 +26,7 @@ Inference engineering, GPU/NVIDIA, networking, trading infrastructure. If a task
 
 ## Positioning and layout
 - Positioning (13 Oct 2026): Azure-first agentic AI architect for regulated financial services, Bedrock second, London from March 2027. UK work eligibility is stated on the CV, not here. Keep career-story narrative out of the repo.
-- Layout: `src/pap/` platform code, `tests/{unit,contract,integration,eval,security}`, `evals/`, `data/`, `infra/`, `docs/{architecture,adr,governance,evidence,reading,prompts,log}`. Timed exercises live in the separate `python-reps` repo; `R0-tickets-basics/` is a leftover to move there.
+- Layout: `src/pap/` platform code, `tests/{unit,contract,integration,eval,security}`, `evals/`, `data/`, `infra/`, `docs/{architecture,adr,governance,evidence,reading,prompts,log}`. Timed exercises live in the separate [`python-reps`](https://github.com/ozgurgulerx/python-reps) repo.
 - `R1-tickets-mcp/` is superseded by `src/pap/tools/` (S1) and git-ignored; delete it by hand.
 
 ## Engineering Journal (how the journey is recorded)

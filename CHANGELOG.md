@@ -11,11 +11,11 @@ All notable changes to this repo, newest first. Format follows [Keep a Changelog
 
 ### Changed
 - `CLAUDE.md` replaced with the platform version (division of labour, workflow, standards); journal rules kept.
+- R0-tickets-basics moved to the `python-reps` repo.
 - R1-tickets-mcp moved into `src/pap/tools/` and `data/`; the old folder is git-ignored.
 
 ### Known gaps
-- Docker image build and CI have not been run; Inspector screenshots not captured.
-- `R0-tickets-basics/` still here until `python-reps` exists.
+- Inspector screenshots not captured.
 
 ## [R0] - 2026-10-13
 

@@ -34,7 +34,7 @@ asyncio_mode = "auto"
 [tool.ruff]
 line-length = 100
 src = ["src", "tests"]
-extend-exclude = ["R0-tickets-basics", "R1-tickets-mcp"]
+extend-exclude = ["R1-tickets-mcp"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B"]

@@ -38,6 +38,10 @@ docker build -t production-agent-platform . && docker run -i --rm production-age
 
 S1 tool bodies are not written yet, so the MCP tests are marked `xfail` until they are.
 
+## Related
+
+- [`python-reps`](https://github.com/ozgurgulerx/python-reps): the daily timed exercises that feed this platform; they share the tickets/policies dataset.
+
 ## Timeline
 
 - [`CHANGELOG.md`](CHANGELOG.md): what shipped, newest first.

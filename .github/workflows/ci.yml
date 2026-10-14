@@ -31,14 +31,3 @@ jobs:
           context: .
           push: false
           tags: production-agent-platform:ci
-
-  r0-tickets-basics:
-    # Temporary: removed when R0 moves to the python-reps repo.
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: R0-tickets-basics
-    steps:
-      - uses: actions/checkout@v4
-      - uses: astral-sh/setup-uv@v5
-      - run: uv run --with pytest pytest -q
