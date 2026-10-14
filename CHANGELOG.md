@@ -5,7 +5,7 @@ All notable changes to this repo, newest first. Format follows [Keep a Changelog
 ## [Unreleased]
 
 ### Added
-- S0 scaffold: root uv project (ruff, mypy strict, pytest, pre-commit), CI, Dockerfile, Makefile, ADR-0001, stage table and prompts in `docs/prompts/`.
+- S0 scaffold: root uv project (ruff, mypy strict, pytest, pre-commit), CI, Dockerfile, Makefile, ADR-0001, stage table and prompts in `docs/specs/`.
 - S1 server shell in `src/pap/tools/` with 8 contract tests; tool bodies deliberately unwritten (Ozgur writes them).
 - Engineering log (`docs/log/`) and this changelog.
 

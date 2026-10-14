@@ -16,3 +16,6 @@ htmlcov/
 
 # Old R1 folder, superseded by src/pap/tools/ (contains an empty nested .git); delete it by hand.
 R1-tickets-mcp/
+
+# Local star-watch snapshots and email delivery receipts.
+.local/github-star-mail/
