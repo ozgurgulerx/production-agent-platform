@@ -9,7 +9,7 @@ The flagship production-evidence repo for Ozgur Guler's contract AI architect la
 - Commit messages carry an authorship tag: `[human]` for code written without AI, `[pair]` for code he wrote with review, `[agent]` for scaffolding/docs/tests generated and reviewed. This is what he will say in an interview, so it must be true.
 
 ## Workflow
-1. Read the stage's SPEC in docs/prompts/SN-*.md. Plan first; show the plan; wait for approval. If the plan adds files, tools or dependencies not in the SPEC, it is wrong.
+1. Read the stage's SPEC in docs/specs/SN-*.md. Plan first; show the plan; wait for approval. If the plan adds files, tools or dependencies not in the SPEC, it is wrong.
 2. Tests first, from the SPEC's test section. Run `uv run pytest -q` and show output.
 3. Implement only what the failing tests need. No speculative abstractions.
 4. Update README stage table status and the evidence line only with a number sourced to a run (link the run or the file).
@@ -26,7 +26,8 @@ Inference engineering, GPU/NVIDIA, networking, trading infrastructure. If a task
 
 ## Positioning and layout
 - Positioning (13 Oct 2026): Azure-first agentic AI architect for regulated financial services, Bedrock second, London from March 2027. UK work eligibility is stated on the CV, not here. Keep career-story narrative out of the repo.
-- Layout: `src/pap/` platform code, `tests/{unit,contract,integration,eval,security}`, `evals/`, `data/`, `infra/`, `docs/{architecture,adr,governance,evidence,reading,prompts,log}`. Timed exercises live in the separate [`python-reps`](https://github.com/ozgurgulerx/python-reps) repo.
+- Layout: `src/pap/` platform code, `tests/{unit,contract,integration,eval,security}`, `evals/`, `data/`, `infra/`, `docs/{architecture,adr,governance,evidence,reading,specs,log}`. Timed exercises live in the separate [`python-reps`](https://github.com/ozgurgulerx/python-reps) repo.
+- Stage contracts live in `docs/specs/SN-*.md`. Existing prompts are collected in `docs/specs/claude-code-prompts.md`; future stage prompts belong at the bottom of their own spec under a `Claude Code` heading.
 - `R1-tickets-mcp/` is superseded by `src/pap/tools/` (S1) and git-ignored; delete it by hand.
 
 ## Engineering Journal (how the journey is recorded)

@@ -1,6 +1,6 @@
-# Stage prompts
+# Stage specifications
 
-Each stage has a SPEC (`SN-*.md`) and a Claude Code prompt (see [`prompts.md`](prompts.md)). Paste the prompt at the repo root after `git checkout -b sN/<name>`. Status changes only with a number sourced to a run.
+Each stage has a contract in its SPEC (`SN-*.md`). Existing Claude Code prompts are collected in [`claude-code-prompts.md`](claude-code-prompts.md). Future stage prompts belong at the bottom of their own spec under a `Claude Code` heading. Paste the prompt at the repo root after `git checkout -b sN/<name>`. Status changes only with a number sourced to a run.
 
 | Stage | Week | Ships | Evidence line | Goals | Status |
 |---|---|---|---|---|---|

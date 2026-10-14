@@ -6,7 +6,7 @@ Scenario: the agent answers "what is the refund status for T-1001 and which poli
 
 ## Stages
 
-Status changes only with a number sourced to a run. Full table with goals and weeks: [`docs/prompts/README.md`](docs/prompts/README.md).
+Status changes only with a number sourced to a run. Full table with goals and weeks: [`docs/specs/README.md`](docs/specs/README.md).
 
 | Stage | What ships | Evidence | Status |
 |---|---|---|---|
@@ -46,4 +46,4 @@ S1 tool bodies are not written yet, so the MCP tests are marked `xfail` until th
 
 - [`CHANGELOG.md`](CHANGELOG.md): what shipped, newest first.
 - [`docs/log/`](docs/log/): weekly engineering notes with numbers.
-- [`docs/prompts/`](docs/prompts/): the stage SPECs and Claude Code prompts.
+- [`docs/specs/`](docs/specs/): the stage SPECs and Claude Code prompts.
