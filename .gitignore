@@ -30,3 +30,6 @@ R1-tickets-mcp/
 
 # Local compatibility link for the installed personal skill
 /skills/github-star-mail
+
+# Local vendor reference documentation
+/documentation/
