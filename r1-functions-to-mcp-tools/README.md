@@ -1,13 +1,65 @@
 # R1: From Python functions to MCP tools
 
-We are building a small support assistant for an imaginary financial company.
-The starting point is simple: look up tickets and refund policies in local JSON
-files. We then expose those functions through MCP and connect an LLM that can
-choose which tool to call.
+## What we are going to build
 
-This stage is about understanding the whole path from a question to a Python
-function and back. The prototype retrieves information; it does not issue
-refunds, change accounts, or make approval decisions.
+We will create an MCP server that exposes our Python functions as tools. Each
+tool will have a name, a description, and an input schema defining the arguments
+it accepts.
+
+We will then connect an agent built with the OpenAI Agents SDK to that server
+using `mcp_servers=[ticket_server]`. The SDK discovers the available tools and
+supplies their definitions to the model alongside the user's request.
+
+The model chooses an appropriate tool and generates a structured tool call
+containing its name and arguments. The SDK sends that call to the MCP server,
+which validates the arguments and executes the corresponding Python function.
+
+The server returns the result to the SDK, which passes it back to the model.
+The model uses that information to answer the user or request another tool if
+needed. We will test the Python functions, the MCP interface, and the agent's
+behaviour separately so we can tell which part works and where a problem occurs.
+
+## What this stage teaches
+
+R1 answers one question: **how does a natural-language question become a Python
+function call, and how does the function's answer get back to the user?**
+
+We build a small support assistant for an imaginary financial company. It can
+look up support tickets and refund policies stored in local JSON files. We build
+it in layers, and each layer is something you can run and test on its own:
+
+```text
+Layer 4  LLM agent        "What is the status of ticket T-1001?"   (src/llm_agent.py)
+            │  the model decides which tool to call and with which arguments
+            ▼
+Layer 3  MCP client       sends a structured call: get_ticket(ticket_id="T-1001")
+            │  speaks the Model Context Protocol over stdio
+            ▼
+Layer 2  MCP server       validates the call and runs the matching wrapper  (src/server.py)
+            │  plain Python call
+            ▼
+Layer 1  Python functions reads data/tickets.json and returns a dict       (src/functions.py)
+```
+
+The key idea is separation of concerns. The functions know nothing about MCP.
+The server knows nothing about the LLM. The LLM never reads the JSON files. Each
+layer has a narrow job, so each layer can be tested without the layers above it.
+
+The prototype only *retrieves* information. It does not issue refunds, change
+accounts, or make approval decisions. Those capabilities belong to later stages.
+
+### Vocabulary used in this stage
+
+| Term | Meaning here |
+| --- | --- |
+| **Function** | Ordinary Python code that takes arguments and returns a value. Layer 1. |
+| **Tool** | A function that has been described to an outside client: a name, a description, and an input schema. Layer 2. |
+| **Input schema** | A JSON Schema document saying which arguments a tool accepts, their types, and which are required. Generated from Python type hints. |
+| **MCP** | The Model Context Protocol. A standard way for a client to ask a server "what tools do you have?" and "run this tool with these arguments". |
+| **FastMCP** | The server-building class in the MCP Python SDK. A decorator turns a function into a tool. |
+| **Transport** | How client and server exchange messages. We use **stdio**: the client starts the server as a subprocess and talks over its standard input and output. |
+| **Client** | Anything that speaks MCP to the server: our pytest session, MCP Inspector, or the OpenAI Agents SDK. |
+| **Agent** | An LLM plus instructions plus tools, with a runner that loops between the model and tool calls until the model gives a final answer. Layer 4. |
 
 ## Current progress
 
@@ -27,16 +79,16 @@ checkpoint. The local work described here is ahead of the published code.
 
 ## Files and responsibilities
 
-| File | Responsibility |
-| --- | --- |
-| [src/functions.py](src/functions.py) | Load fixtures, filter tickets, and find ticket or policy records |
-| [src/server.py](src/server.py) | Register the functions as MCP tools and run the server |
-| [src/llm_agent.py](src/llm_agent.py) | Connect an OpenAI Agents SDK agent to the server and ask one question |
-| [data/tickets.json](data/tickets.json) | Synthetic ticket records |
-| [data/policies.json](data/policies.json) | Synthetic policy records |
-| [tests/test_functions.py](tests/test_functions.py) | Call the Python functions directly |
-| [tests/test_mcp_server.py](tests/test_mcp_server.py) | Discover and call tools through an MCP client session |
-| [docs/evidence/screenshots/](docs/evidence/screenshots/) | Inspector screenshots from manual checks |
+| File | Layer | Responsibility |
+| --- | --- | --- |
+| [src/functions.py](src/functions.py) | 1 | Load fixtures, filter tickets, and find ticket or policy records |
+| [src/server.py](src/server.py) | 2 | Register the functions as MCP tools and run the server |
+| [src/llm_agent.py](src/llm_agent.py) | 3 and 4 | Connect an OpenAI Agents SDK agent to the server and ask one question |
+| [data/tickets.json](data/tickets.json) | data | Eight synthetic ticket records |
+| [data/policies.json](data/policies.json) | data | Five synthetic policy records |
+| [tests/test_functions.py](tests/test_functions.py) | tests 1 | Call the Python functions directly |
+| [tests/test_mcp_server.py](tests/test_mcp_server.py) | tests 2 | Discover and call tools through an MCP client session |
+| [docs/evidence/screenshots/](docs/evidence/screenshots/) | evidence | Inspector screenshots from manual checks |
 
 ## Local setup and commands
 
@@ -75,31 +127,85 @@ and Git. You can check whether it is present without printing it:
 
 ## Step 1: Write the Python functions
 
-The functions do the data work. They can be called and tested without MCP or an LLM.
+### Why start here
+
+Everything above this layer only *routes* a call. The functions are where the
+actual work happens, so they must be correct before anything else matters. They
+can be imported and tested in plain Python with no MCP, no server process, and no
+API key.
+
+### The data
+
+The fixtures are deliberately small so you can predict every answer by hand.
+
+| Ticket | Status | Customer | Subject |
+| --- | --- | --- | --- |
+| T-1001 | open | C-42 | Card declined twice |
+| T-1002 | closed | C-17 | Change email address |
+| T-1003 | open | C-42 | Refund not received |
+| T-1004 | pending | C-99 | Statement missing |
+| T-1005 | closed | C-07 | Login loop |
+| T-1006 | open | C-55 | Disputed charge |
+| T-1007 | pending | C-55 | Mobile crash |
+| T-1008 | open | C-42 | Address update |
+
+Policies: `POL-REFUND-01` (Refund window), `POL-REFUND-02` (Refund method),
+`POL-REFUND-03` (Approval threshold), `POL-DISPUTE-01` (Disputed charges),
+`POL-DATA-01` (Customer data).
+
+Keep the fixtures synthetic. Do not add card numbers or national insurance numbers.
+
+### The three functions
 
 | Function | Inputs | Current result |
 | --- | --- | --- |
 | `list_tickets` | Optional `status` and `customer_id` | A list of summaries containing `id`, `subject`, `status`, `customer_id`, and `created_at` |
 | `get_ticket` | `ticket_id` | The full matching record, or `{"error": "not_found", "id": ticket_id}` |
-| `get_policy` | `policy_id` | A dictionary containing the policy's ID, title, and text, or the same missing-record error shape |
+| `get_policy` | `policy_id` | The full matching policy record, or the same missing-record error shape |
 
-For `list_tickets`, `None` means no filter. When both filters are supplied, a
-ticket must match both. No matches returns an empty list. The `load_json` helper
-reads the files and remains internal; it is not an MCP tool.
+Three design decisions are worth noticing, because every later layer depends on them:
+
+1. **Missing records return a value, not an exception.** `get_ticket("NOPE")`
+   returns `{"error": "not_found", "id": "NOPE"}`. An exception would surface as a
+   protocol-level error over MCP; a dictionary is an ordinary successful result
+   that the model can read and explain. Both are valid designs. We chose the
+   dictionary so the model can say "that ticket does not exist" instead of
+   receiving a stack trace.
+2. **`None` means "no filter".** `list_tickets(status=None, customer_id=None)`
+   returns everything. When both filters are supplied, a ticket must match both.
+   No matches returns an empty list, not an error.
+3. **`list_tickets` returns summaries, not full records.** The full record
+   includes the body text. A list of eight full records would waste the model's
+   context window when it only needs IDs and statuses to decide what to do next.
+
+The `load_json` helper reads the files and remains internal; it is not a tool.
+Not every function has to become a tool, and only the ones we decorate do.
 
 The original brief also mentioned possible tag filtering, policy references and
 refund-status fields on tickets, and removing sensitive fields. Those are not
 implemented guarantees. In particular, `get_ticket` returns the fixture record
-as stored; it does not redact fields. Keep the fixtures synthetic and do not add
-card numbers or national insurance numbers.
+as stored; it does not redact fields.
 
 ## Step 2: Expose the functions with FastMCP
 
-**FastMCP** is the server-building interface we import from the MCP Python SDK
-as `mcp.server.fastmcp`. MCP, the Model Context Protocol, defines how a client
-discovers tools and requests their execution.
+### Why a protocol at all
 
-In `server.py`, this creates the server object:
+An LLM cannot call Python directly. It can only produce text. For a model to
+"use" a function, something must:
+
+1. tell the model which functions exist and what arguments they take,
+2. parse the model's request to call one,
+3. actually run it, and
+4. hand the result back to the model.
+
+MCP standardises steps 1 and 3, so any MCP client (Inspector, the OpenAI Agents
+SDK, Claude Desktop, and so on) can use our server without custom glue code. The
+server is the piece we own; the clients are off-the-shelf.
+
+### Building the server
+
+**FastMCP** is the server-building interface we import from the MCP Python SDK
+as `mcp.server.fastmcp`. In `server.py`, this creates the server object:
 
 ```python
 mcp = FastMCP("support-tickets")
@@ -108,34 +214,50 @@ mcp = FastMCP("support-tickets")
 `mcp` is the Python variable. `"support-tickets"` is the name reported to clients.
 That is why tests use `from server import mcp`.
 
-Each tool has a small wrapper:
+Each tool is a small wrapper around a function from Step 1:
 
 ```python
 @mcp.tool()
 def get_ticket(ticket_id: str) -> dict:
-    """Get the full details of the ticket by its ID."""
+    """Get the full details of the ticket by its id."""
     return functions.get_ticket(ticket_id)
 ```
 
-The decorator registers the tool. The docstring becomes its description, and
-the type hints describe the input and return types. FastMCP uses this metadata
-to describe the tool to clients. A regular `#` comment is for source-code readers;
-it does not become the tool description.
+Read this wrapper as three pieces of metadata plus one line of logic:
+
+| Piece | Where it comes from | What the client sees |
+| --- | --- | --- |
+| Tool name | the function name `get_ticket` | `"name": "get_ticket"` |
+| Description | the docstring | `"description": "Get the full details of the ticket by its id."` |
+| Input schema | the type hints `ticket_id: str` | `{"type": "object", "properties": {"ticket_id": {"type": "string"}}, "required": ["ticket_id"]}` |
+| Logic | the body | nothing; the client only sees the result |
+
+The decorator registers the tool. A regular `#` comment is for source-code
+readers; it does not become the tool description. This matters because the
+description is the *only* thing a model has to decide when a tool is relevant.
+A vague docstring produces a model that picks the wrong tool.
 
 The wrapper delegates to `functions.py`, so the lookup logic stays in one place.
-For the list tool, `status: str | None = None` means the argument accepts a string
-or `None` and defaults to `None` when omitted. `-> list[dict]` describes a list
-of dictionaries as the return value.
+If a tool wrapper contained its own logic, the function tests in Step 3 would no
+longer prove the tool is correct.
+
+For the list tool, `status: str | None = None` means the argument accepts a
+string or `None` and defaults to `None` when omitted. In the generated schema
+this becomes `anyOf: [string, null]` with `default: null` and the field is not
+listed under `required`. `-> list[dict]` describes a list of dictionaries as the
+return value.
 
 ### What the server does during a request
 
 1. A client asks for the available tools. The server returns their names,
-   descriptions, and input schemas.
+   descriptions, and input schemas. (In the logs this is a `ListToolsRequest`.)
 2. The client sends a structured call, such as `get_ticket` with
-   `{"ticket_id": "T-1001"}`.
-3. FastMCP validates the arguments and calls the registered wrapper.
+   `{"ticket_id": "T-1001"}`. (A `CallToolRequest`.)
+3. FastMCP validates the arguments against the schema and calls the registered
+   wrapper. A call with a missing required argument is rejected here and never
+   reaches our code.
 4. The wrapper calls our Python function, which reads the fixture and returns data.
-5. FastMCP packages the result as an MCP response and sends it back to the client.
+5. FastMCP serialises the result as MCP content and sends it back to the client.
 
 The server does not interpret natural-language questions. Inspector lets us
 choose the call manually; an agent application lets a model choose it.
@@ -147,12 +269,16 @@ if __name__ == "__main__":
     mcp.run(transport="stdio")
 ```
 
-The guard starts the server when the file is run directly. Importing `server`
-defines the tools without starting the stdio loop. This makes imports usable in tests.
+The guard starts the server only when the file is run directly. Importing
+`server` defines the tools without starting the stdio loop, which is what makes
+the in-memory tests in Step 3 possible.
 
 With **stdio**, the client launches the server as a subprocess and communicates
-through its standard input and output. No HTTP endpoint is needed. The server
-waits for MCP messages rather than displaying an ordinary input prompt.
+through its standard input and output. No HTTP endpoint, port, or network is
+needed. The server waits for MCP messages rather than displaying an ordinary
+input prompt. One consequence: standard output belongs to the protocol. Anything
+else written to stdout, such as a stray `print`, corrupts the message stream.
+Logs go to standard error instead.
 
 Our tools currently only read data. Explicit `readOnlyHint` annotations have not
 been added. Such annotations describe behaviour to a client; they do not enforce
@@ -160,32 +286,46 @@ read-only access and are separate from docstrings.
 
 ## Step 3: Verify the functions and tools
 
-| Test stage | Question it answers | How we test |
-| --- | --- | --- |
-| 1. Python function tests | Does the lookup and filtering logic work? | `pytest` calls the functions directly in `test_functions.py`. |
-| 2. Automated MCP server tests | Can a client discover and call the tools correctly? | `pytest` uses an initialized in-memory MCP session in `test_mcp_server.py`. |
-| 3. Manual Inspector tests | What does a client see, and what do tool calls return? | Select tools, enter arguments, inspect responses, and capture screenshots. |
-| 4. LLM agent tests | Does the model choose the right tool and use its result correctly? | Use the OpenAI Agents SDK with natural-language tasks, then check tool choices, arguments, and answers. |
+### The testing ladder
 
-The second and third stages exercise the same MCP interface. Neither needs an LLM.
+Each layer gets its own test stage, and each stage answers a different question.
+A failure in a higher stage with a passing lower stage tells you exactly which
+layer broke.
 
-### Function tests
+| Test stage | Layer | Question it answers | How we test | Needs |
+| --- | --- | --- | --- | --- |
+| 1. Python function tests | 1 | Does the lookup and filtering logic work? | `pytest` calls the functions directly in `test_functions.py` | Python only |
+| 2. Automated MCP server tests | 2 | Can a client discover and call the tools correctly? | `pytest` uses an in-memory MCP session in `test_mcp_server.py` | MCP SDK |
+| 3. Manual Inspector tests | 2 and 3 | What does a real external client see and get back? | Select tools, enter arguments, inspect responses, capture screenshots | Node.js |
+| 4. LLM agent tests | 4 | Does the model choose the right tool and use its result correctly? | OpenAI Agents SDK with natural-language tasks; check tool choices, arguments, and answers | API key, paid calls |
+
+Stages 2 and 3 exercise the same MCP interface. Neither needs an LLM. Stage 2 is
+fast and automated; stage 3 is slow and visual. Stage 4 is the only one where a
+model is involved, and the only one that is nondeterministic.
+
+### Stage 1: Function tests
 
 The three existing tests check an existing ticket ID, an existing policy ID,
 and the count and status of open tickets. They call `functions.py` directly.
 The broader edge cases below are covered through MCP.
 
-### Automated MCP server tests
+### Stage 2: Automated MCP server tests
 
 The test file imports the server object and uses
 `create_connected_server_and_client_session(mcp)` to connect a client and server
-inside the same Python process. The helper initializes the MCP session. Requests
-still go through MCP, but no separate server process or Inspector is needed.
+inside the same Python process. Requests still go through MCP, with real
+messages and real schema validation, but no separate server process or Inspector
+is needed.
 
-`async def` lets a test use `await`. `await session.list_tools()` waits for the
-response while allowing other asynchronous work to run. `async with` opens the
-connection and closes it when the block ends. The stage's `asyncio_mode = "auto"`
-lets pytest run these asynchronous tests.
+A short note on the `async` keywords you will see in these tests. MCP is
+message-based: send a request, wait for a response. Python expresses "wait
+without blocking everything else" with `async`/`await`:
+
+- `async def` marks a function that can pause while waiting.
+- `await session.list_tools()` sends the request and pauses until the reply arrives.
+- `async with` opens the connection and closes it when the block ends, even on failure.
+- `asyncio_mode = "auto"` in `pyproject.toml` lets pytest run `async def` tests
+  without extra markers.
 
 The 13 cases check:
 
@@ -194,30 +334,40 @@ The 13 cases check:
 - All tickets, each filter separately, both filters together, and no matches.
 - Summary fields and rejection of a missing required ticket ID.
 
-The installed SDK returns list results as one text content block per ticket.
-The tests decode each block; no matches produces no content blocks. This differs
-from the plain Python function's return value, which is a list.
+Two details of the MCP result shape are worth knowing:
+
+- A tool call returns `result.content`, a list of content blocks, plus
+  `result.isError`. Our `not_found` dictionary arrives with `isError` false,
+  because the function returned normally. A missing required argument arrives
+  with `isError` true, because validation failed before our code ran.
+- The installed SDK returns list results as one text content block per ticket.
+  The tests decode each block; no matches produces no content blocks. This
+  differs from the plain Python function's return value, which is a list.
 
 Use `-v` to see `PASSED` beside each test. Without verbose output, a dot usually
 represents a passing test. Pytest reports results in the terminal, not in the
 source file.
 
-### Test the server with MCP Inspector
+### Stage 3: Test the server with MCP Inspector
 
-Inspector is an interactive MCP client. You choose the tool and arguments yourself.
-Launch it from R1:
+Inspector is an interactive MCP client in the browser. It is the first time our
+server is used by a program we did not write, which is the real test of whether
+the tool descriptions and schemas make sense on their own. Launch it from R1:
 
 ```bash
 npx @modelcontextprotocol/inspector ../.venv/bin/python src/server.py
 ```
 
-Keep the terminal running. Connect if needed, then open **Tools**. You should see
-`get_ticket`, `get_policy`, and `list_tickets`.
+The two arguments after `inspector` are the command Inspector will run to start
+our server as a subprocess, exactly as any stdio client would. Keep the terminal
+running. Connect if needed, then open **Tools**. You should see `get_ticket`,
+`get_policy`, and `list_tickets`.
 
 ![Inspector showing the three tools and the get_policy input form](docs/evidence/screenshots/mcp-inspector-tools.png)
 
 This screenshot demonstrates discovery: the docstring appears as the description
-and the parameter becomes an input field. It does not show a completed call.
+and the parameter becomes an input field. Compare it with the wrapper code in
+Step 2 and you can see each piece of metadata land. It does not show a completed call.
 
 Select a tool, fill in its inputs, and click **Execute Tool**. These expected
 results refer to the current fixtures:
@@ -233,8 +383,9 @@ results refer to the current fixtures:
 | Existing policy | `get_policy`, `policy_id="POL-REFUND-01"` | Policy titled `Refund window` |
 | Unknown policy | `get_policy`, `policy_id="DOES-NOT-EXIST"` | The `not_found` dictionary |
 
-Omit unused filters rather than entering an empty string. In **Edit as JSON**,
-use `{}` for all tickets or `{"status": "open"}` for open tickets.
+Omit unused filters rather than entering an empty string. An empty string is a
+value, and no ticket has `status == ""`. In **Edit as JSON**, use `{}` for all
+tickets or `{"status": "open"}` for open tickets.
 
 The functions return a `not_found` dictionary normally, so Inspector may label
 the MCP call successful while showing `"error": "not_found"` in its data. That
@@ -256,30 +407,13 @@ in its terminal when finished.
 
 ## Step 4: Connect an LLM agent
 
-We created `src/llm_agent.py` with the **OpenAI Agents SDK**. It uses
-`gpt-5.6-luna` and the MCP server we already built. The agent script and server run
-locally; the model runs through the OpenAI API.
+### What changes when a model is the client
 
-The installation package is named `openai-agents`, but Python imports it as
-`agents`. It is an installed library, not another file we need to write.
-
-| Component | Job in our script |
-| --- | --- |
-| `MCPServerStdio` | Launch `src/server.py` using `sys.executable`, the current Python interpreter, and open the MCP connection |
-| `Agent` | Define the model, instructions, and available server connections |
-| `mcp_servers=[ticket_server]` | Make our server's tools available to the model |
-| `Runner.run(...)` | Manage model requests, requested tool calls, and responses |
-| `result.final_output` | Hold the final answer printed in the terminal |
-
-Inside the `async with` block, `ticket_server` names the client-side connection.
-It is not the `mcp` variable inside `server.py`. Keeping the agent run inside that
-block keeps the connection open while the model uses the tools.
-
-The script currently asks one fixed question:
-
-> What is the status of ticket T-1001?
-
-The intended flow is:
+Up to now a human chose the tool and typed the arguments. In Step 4 the model
+does both. Nothing in the server changes. What is new is the **agent loop**: a
+runner that sends the question and the tool definitions to the model, executes
+any tool the model asks for, feeds the result back, and repeats until the model
+produces a final answer.
 
 ```text
 Question + instructions + tool definitions → model
@@ -289,15 +423,38 @@ Tool result → MCP client → model
 Final answer → terminal
 ```
 
-The SDK discovers the tool definitions and supplies them to the model. The model
-chooses a tool and arguments; the runner executes that request through MCP and
-returns the result to the model. The model then writes its answer, or requests
-another tool if needed. When the run finishes, the script prints the answer and
-closes the connection.
+The model never reads the fixture files. It only sees the tool descriptions and
+whatever the tools return. This is the whole point of the design: the model's
+knowledge of our data is limited to what our functions choose to expose.
 
-The model does not read our fixture files directly. Our Python functions do that.
-Instructions tell the model to use tools and avoid invented details, but those
-instructions still need behavioural tests.
+### The script
+
+`src/llm_agent.py` uses the **OpenAI Agents SDK** with `gpt-5.6-luna` and the
+MCP server we already built. The agent script and server run locally; the model
+runs through the OpenAI API.
+
+The installation package is named `openai-agents`, but Python imports it as
+`agents`. It is an installed library, not another file we need to write.
+
+| Component | Job in our script |
+| --- | --- |
+| `MCPServerStdio` | Launch `src/server.py` using `sys.executable`, the current Python interpreter, and open the MCP connection. This is the SDK's built-in MCP client, the same role Inspector played in Step 3. |
+| `Agent` | Define the model, instructions, and available server connections |
+| `mcp_servers=[ticket_server]` | Make our server's tools available to the model |
+| `Runner.run(...)` | Run the agent loop: model requests, tool calls, and responses |
+| `result.final_output` | Hold the final answer printed in the terminal |
+
+Inside the `async with` block, `ticket_server` names the client-side connection.
+It is not the `mcp` variable inside `server.py`. Keeping the agent run inside that
+block keeps the server subprocess alive while the model uses the tools.
+
+The script currently asks one fixed question:
+
+> What is the status of ticket T-1001?
+
+The instructions tell the model to use tools, not to invent details, and to say
+when a record is missing. Instructions shape behaviour but do not guarantee it,
+which is why they still need the behavioural tests described below.
 
 ### First live run and server logs
 
@@ -317,10 +474,10 @@ INFO Processing request of type ListToolsRequest
 Ticket T-1001 is **open**.
 ```
 
-Server logs are diagnostic messages about requests being processed. `INFO` means
-informational activity. `ListToolsRequest` means the client asked for the tool
-list; this can happen more than once. `CallToolRequest` means it requested a tool
-execution. The last line is the agent's answer, printed by `llm_agent.py`.
+Read the log lines against the request sequence from Step 2. `ListToolsRequest`
+is the client asking for the tool list, which the SDK does more than once.
+`CallToolRequest` is the model's chosen tool being executed. The last line is the
+agent's answer, printed by `llm_agent.py`.
 
 For stdio, the server's standard output carries MCP messages. These logs go to
 standard error, which the terminal also displays. Keep ordinary debugging prints
@@ -340,6 +497,21 @@ Follow with requests for open tickets, a named policy, and an unknown ticket.
 Check that arguments match the request and that missing records are reported
 without invented facts. A correct final answer alone could be a guess, so it
 is not enough evidence of correct tool use.
+
+## What you should be able to explain after R1
+
+If you can answer these from memory, the basics are in place.
+
+1. Why do the functions in `functions.py` not import anything from MCP?
+2. What three pieces of metadata does `@mcp.tool()` extract from a wrapper, and
+   where does each come from?
+3. Why does `get_ticket` return a `not_found` dictionary instead of raising?
+4. What is the difference between `isError` being true and a result that
+   contains `"error": "not_found"`?
+5. What does stdio transport mean, and why must the server never `print` to stdout?
+6. Why can the tests import `server` without the server starting?
+7. What does the OpenAI Agents SDK do that Inspector does not?
+8. Why is a correct final answer from the agent not enough evidence on its own?
 
 ## Execution log
 
@@ -361,6 +533,7 @@ These are recorded results, not a fresh test run on every README edit.
 | Inspector connects but tools stay blank or time out | Inspect Protocol, Console, and terminal output. Try reconnecting. Connection alone is not a passed test. |
 | No visible `PASSED` labels | Run pytest with `-v`; its default output may show dots. |
 | API authentication fails | Check the key exported in the launching shell. The R1 agent relies on the environment; it does not load a project `.env` file. |
+| Server works in tests but breaks under a client | Look for `print` calls in `server.py` or `functions.py`. Stdout is the protocol channel under stdio. |
 
 ## Remaining work
 
