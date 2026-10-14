@@ -8,3 +8,13 @@ A hands-on Python-to-agent engineering learning path. The learner writes every f
 Each stage is self-contained. Start in R0 and follow its README. Empty source files and test folders are intentional: passing scaffold checks does not verify functionality.
 
 The future roadmap is R2 bounded agent, R3 retrieval and evals, R4 orchestration and human approval, R5 API and OAuth, R6 observability, R7 Azure deployment, R8 architecture and governance, R9 release, and R10 Bedrock. These stages are planned, with no folders or implementations yet.
+
+## Python packages
+
+[requirements.txt](requirements.txt) lists OpenAI Agents SDK, Microsoft Agent Framework, FastMCP, MCP, Pydantic, and our testing and linting tools. Install them into the root virtual environment from this folder:
+
+```bash
+uv pip install --python .venv/bin/python -r requirements.txt
+```
+
+This is an unpinned package list; each stage keeps its own `pyproject.toml` and `uv.lock` for reproducible environments.

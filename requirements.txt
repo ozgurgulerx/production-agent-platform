@@ -1,0 +1,12 @@
+# Agent SDKs and MCP tools
+openai-agents
+agent-framework
+fastmcp
+mcp
+pydantic
+
+# Testing and linting
+pytest
+pytest-cov
+pytest-asyncio
+ruff
