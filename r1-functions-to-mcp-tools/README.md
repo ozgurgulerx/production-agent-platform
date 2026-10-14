@@ -63,17 +63,98 @@ The larger task is (imaginary scenario) building an ops agent for a financial co
 
 Ok, once done - test the functions with tests/test_functions.py
 
-### Three levels of testing
+### Testing stages
 
 | Test level | Question it answers | How we will test |
 | --- | --- | --- |
-| Python function test | Does the ticket lookup logic work? | Use `pytest` to call the Python functions directly and assert their results. |
-| MCP client test | Can a client discover and call the tool correctly? | Use Inspector for manual checks, then `pytest` with an MCP client session for automated discovery and tool-call checks. |
-| LLM agent test | Does the model choose the right tool and use its result correctly? | Use the OpenAI Agents SDK to connect an agent to our MCP server, give it natural-language tasks, and check its tool choices, arguments, and final answers. |
+| 1. Python function tests (`functions.py`) | Does the ticket and policy lookup logic work? | Use `pytest` in `tests/test_functions.py` to call the functions directly and assert their results, including filters and missing IDs. |
+| 2. Automated MCP server tests (`server.py`) | Does the server expose the right tools and execute calls correctly through MCP? | Use `pytest` in `tests/test_mcp_server.py` with an initialized MCP client session to check tool names, descriptions, input schemas, and calls to each tool. |
+| 3. Manual MCP Inspector tests | Can we discover and call the tools through an interactive client? | Use Inspector to select tools, enter arguments, inspect returned results, and capture screenshots. |
+| 4. LLM agent tests | Does the model choose the right tool and use its result correctly? | Use the OpenAI Agents SDK to connect an agent to our MCP server, give it natural-language tasks, and check its tool choices, arguments, and final answers. |
 
-Inspector addresses the MCP client level manually: you choose the tool, supply
-arguments, and inspect the result. Automated MCP client tests repeat those checks
-in code. Neither requires an LLM.
+Stages 2 and 3 both test the MCP interface: pytest automates the checks, while
+Inspector lets us perform them manually. Neither requires an LLM. The automated
+server tests complement the function tests by checking the MCP connection and
+tool definitions as well as the returned data.
+
+#### LLM agent tests
+
+**Build brief:** Write a simple local Python agent using the OpenAI Agents SDK.
+The agent script and MCP server run on our machine; the language model runs
+through the OpenAI API. Start with one question per run and display the final
+answer in the terminal.
+
+The agent should:
+
+1. Read its API key from the environment, keeping it out of source code.
+2. Connect to our existing MCP server over stdio, launching it from the R1 folder
+   so its relative data paths work.
+3. Make the server's three tools available to the model and instruct it to use
+   them for ticket and policy facts, and report missing records honestly.
+4. Accept a question, let the model choose and call the appropriate tool, and
+   display the answer. Make the tool name, arguments, and returned result
+   inspectable so we can check what happened.
+5. Close the MCP connection when the run finishes.
+
+**First checkpoint:** Ask “What is the status of ticket T-1001?” and observe a
+`get_ticket` call followed by an answer grounded in its result. This first run is
+a manual agent check; automated agent tests can follow once the connection works.
+
+These tests check whether a model can use our tools to answer a user's question.
+We will connect an agent built with the OpenAI Agents SDK to our MCP server over
+stdio. Unlike Inspector and the automated MCP tests, the model chooses the tool
+and its arguments from a natural-language task.
+
+For example, ask: **“What is the status of ticket T-1001?”** Check that the agent
+calls `get_ticket` with `ticket_id="T-1001"`, receives the ticket, and answers that
+its status is **open**. Check the tool call as well as the final answer: a correct
+answer alone could be a guess. The wording can vary, but the facts must match
+the returned data.
+
+Follow-up cases should ask for open tickets, request a policy, and reference an
+unknown ticket. Check the selected tool, arguments, and whether the answer stays
+grounded in the result, including reporting missing records without inventing them.
+The basic agent is implemented in `src/llm_agent.py` and has completed one live
+run. Automated agent tests and the follow-up cases above are still planned.
+Live runs require an OpenAI API key and incur model usage costs.
+
+#### Running the agent and reading server logs
+
+From the R1 folder, with `OPENAI_API_KEY` exported, run:
+
+```bash
+../.venv/bin/python src/llm_agent.py
+```
+
+The script currently asks one fixed question: “What is the status of ticket
+T-1001?” In the verified live run, the server logged these request types in order
+(timestamps and file locations omitted here):
+
+```text
+INFO Processing request of type ListToolsRequest
+INFO Processing request of type CallToolRequest
+INFO Processing request of type ListToolsRequest
+Ticket T-1001 is **open**.
+```
+
+**Server logs** are diagnostic messages written by the MCP server while it runs.
+They describe activity; they are separate from the model's final answer.
+
+| Output | Meaning |
+| --- | --- |
+| `INFO` | An informational message, not an error. |
+| `ListToolsRequest` | The client asked which tools the server provides. This may happen more than once during a run. |
+| `CallToolRequest` | The client requested execution of a tool. |
+| `Ticket T-1001 is **open**.` | The agent's final answer, printed by `llm_agent.py`. |
+
+With stdio transport, the server uses standard output for MCP protocol messages
+and sends these logs to standard error. The terminal can display both streams.
+Do not add ordinary `print()` debugging to `server.py`'s protocol output.
+
+This run exited successfully and confirms that a tool call occurred and the
+agent returned the correct ticket status. These basic logs do not show the tool
+name, arguments, or returned data; inspecting those details is still needed to
+verify the exact call rather than infer it from the answer.
 
 ====
 
