@@ -1,5 +1,13 @@
 # R1 — Ticket functions as MCP tools (Day 1)
 
+**FastMCP** is the server-building interface we use from the MCP Python SDK
+(`mcp.server.fastmcp`). It exposes Python functions as tools through the Model
+Context Protocol (MCP). The `@mcp.tool()` decorator registers a function, while
+its type hints and docstring describe the tool's inputs, output, and purpose.
+FastMCP handles MCP requests and responses; our functions still do the actual
+work. It does not choose which tool to call—the client, or an AI model through
+the client, makes that choice.
+
 From this folder, activate the shared root environment with `source ../.venv/bin/activate`. Run tests with `python -m pytest --cov=src --cov-report=term-missing --cov-fail-under=80`. See the root README for dependency installation.
 
 
@@ -21,6 +29,18 @@ The larger task is (imaginary scenario) building an ops agent for a financial co
 **get_policy** — one policy document by id, returned as text with its id and title, so the agent can quote it when it answers “which policy applies”. Unknown id → the same clean error shape as get_ticket.
 
 Ok, once done - test the functions with tests/test_functions.py
+
+### Three levels of testing
+
+| Test level | Question it answers | How we will test |
+| --- | --- | --- |
+| Python function test | Does the ticket lookup logic work? | Use `pytest` to call the Python functions directly and assert their results. |
+| MCP client test | Can a client discover and call the tool correctly? | Use Inspector for manual checks, then `pytest` with an MCP client session for automated discovery and tool-call checks. |
+| LLM agent test | Does the model choose the right tool and use its result correctly? | Use the OpenAI Agents SDK to connect an agent to our MCP server, give it natural-language tasks, and check its tool choices, arguments, and final answers. |
+
+Inspector addresses the MCP client level manually: you choose the tool, supply
+arguments, and inspect the result. Automated MCP client tests repeat those checks
+in code. Neither requires an LLM.
 
 ====
 
