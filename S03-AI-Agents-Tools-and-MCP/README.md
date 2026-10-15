@@ -6,7 +6,7 @@ to a tool an LLM agent can select. It is the current starting point in the
 
 ## Learning order
 
-| Subsection | What it covers | Verification at migration |
+| Subsection | What it covers | Verification recorded on 2026-10-15 |
 | --- | --- | --- |
 | [S03.01: Python Functions](S03.01-Python-Functions/README.md) | Read ticket data and practise lookup, filtering, and aggregation | 5 tests pass; 100% coverage; existing lint/format failures |
 | [S03.02: Functions to MCP Tools](S03.02-Functions-to-MCP-Tools/README.md) | Expose functions through FastMCP, test the MCP interface, inspect calls, and connect an OpenAI Agents SDK agent | 16 tests pass; 76.47% coverage, below the required 80%; existing lint/format failures |
@@ -25,15 +25,30 @@ Run commands from the subsection folder. From S03.02, for example:
 
 The shared root `.venv` is two levels above either project. The MCP server and
 agent still expect their working directory to be S03.02, where `data/` and `src/`
-are located. See the [root environment instructions](../README.md#python-environment)
+are located. See the [environment instructions](#python-environment)
 for installation.
+
+## Python environment
+
+The existing local workflow uses the shared root `.venv`. The
+[requirements.txt](../requirements.txt) file lists the SDKs and development tools.
+From the repository root:
+
+```bash
+uv pip install --python .venv/bin/python -r requirements.txt
+source .venv/bin/activate
+cd S03-AI-Agents-Tools-and-MCP/S03.02-Functions-to-MCP-Tools
+python -m pytest --cov=src --cov-report=term-missing --cov-fail-under=80
+```
+
+Alternatively, from either subsection folder use `../../.venv/bin/python`
+explicitly. Plain `uv run` selects the subsection's environment instead. The root
+package list is unpinned; subsection manifests and lockfiles remain available for
+isolated checks. S03.02's own manifest does not yet include the OpenAI Agents SDK,
+so its isolated environment is not sufficient for the agent example.
 
 ## Current limits
 
 S03.02 includes one successful live agent run, but automated agent tests remain
-pending. The directory migration does not fix the existing coverage gap, lint
-issues, or missing stage-local agent dependency. No model requests are needed to
-verify the move.
-
-S03.01 was previously R0 (`r0-python-recap-functions`); S03.02 was previously R1
-(`r1-functions-to-mcp-tools`). Those names may appear in older learning records.
+pending. The existing coverage gap, lint issues, and missing subsection-local
+agent dependency still need attention. See each subsection's README for details.

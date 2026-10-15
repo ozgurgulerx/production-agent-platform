@@ -4,7 +4,7 @@ Practise file reading, lists, dictionaries, filtering, validation, exceptions, a
 
 ## Start
 
-From this folder, run `source ../../.venv/bin/activate` to use the shared root environment (see the root README for installation). Write tests in `tests/`, implement the contracts below, and run `python -m pytest --cov=src --cov-report=term-missing --cov-fail-under=80`. Imports resolve from `src`, so tests can import `functions`. Run `python -m ruff check .` and `python -m ruff format --check .` before recording progress.
+From this folder, run `source ../../.venv/bin/activate` to use the shared root environment (see the [S03 environment instructions](../README.md#python-environment) for installation). Write tests in `tests/`, implement the contracts below, and run `python -m pytest --cov=src --cov-report=term-missing --cov-fail-under=80`. Imports resolve from `src`, so tests can import `functions`. Run `python -m ruff check .` and `python -m ruff format --check .` before recording progress.
 
 ## Function contracts
 

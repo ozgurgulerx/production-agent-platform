@@ -94,7 +94,7 @@ the required 80%, because the agent has no automated tests yet.
 ## Local setup and commands
 
 The runs in this log used the shared `.venv` at the repository root. Dependency
-installation is described in the [root README](../../README.md). The stage also has
+installation is described in the [S03 environment instructions](../README.md#python-environment). The stage also has
 its own `pyproject.toml` and lockfile, but its dependency declaration does not yet
 include the OpenAI Agents SDK. A standalone stage environment is therefore not
 yet sufficient for the agent example.
