@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        stage: [r0-python-recap-functions, r1-functions-to-mcp-tools]
+        stage: [S03-AI-Agents-Tools-and-MCP/S03.01-Python-Functions, S03-AI-Agents-Tools-and-MCP/S03.02-Functions-to-MCP-Tools]
     defaults:
       run:
         working-directory: ${{ matrix.stage }}

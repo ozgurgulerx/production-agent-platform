@@ -1,5 +1,5 @@
 [project]
-name = "r1-functions-to-mcp-tools"
+name = "s03-02-functions-to-mcp-tools"
 version = "0.1.0"
 description = "Expose learner-written functions as read-only MCP tools"
 readme = "README.md"

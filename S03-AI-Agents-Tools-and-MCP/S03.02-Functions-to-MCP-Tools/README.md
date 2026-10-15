@@ -1,4 +1,4 @@
-# R1: From Python functions to MCP tools
+# S03.02: Functions to MCP Tools
 
 ## What we are going to build
 
@@ -21,7 +21,7 @@ behaviour separately so we can tell which part works and where a problem occurs.
 
 ## What this stage teaches
 
-R1 answers one question: **how does a natural-language question become a Python
+S03.02 answers one question: **how does a natural-language question become a Python
 function call, and how does the function's answer get back to the user?**
 
 We build a small support assistant for an imaginary financial company. It can
@@ -94,7 +94,7 @@ the required 80%, because the agent has no automated tests yet.
 ## Local setup and commands
 
 The runs in this log used the shared `.venv` at the repository root. Dependency
-installation is described in the [root README](../README.md). The stage also has
+installation is described in the [root README](../../README.md). The stage also has
 its own `pyproject.toml` and lockfile, but its dependency declaration does not yet
 include the OpenAI Agents SDK. A standalone stage environment is therefore not
 yet sufficient for the agent example.
@@ -102,7 +102,7 @@ yet sufficient for the agent example.
 Start from the repository root:
 
 ```bash
-cd r1-functions-to-mcp-tools
+cd S03-AI-Agents-Tools-and-MCP/S03.02-Functions-to-MCP-Tools
 ```
 
 Run the following commands from that folder, not from `src`. The functions use
@@ -112,11 +112,11 @@ packages.
 
 | Task | Command |
 | --- | --- |
-| Function tests | `../.venv/bin/python -m pytest tests/test_functions.py -v` |
-| MCP server tests | `../.venv/bin/python -m pytest tests/test_mcp_server.py -v` |
-| Full R1 suite with coverage | `../.venv/bin/python -m pytest --cov=src --cov-report=term-missing --cov-fail-under=80` |
-| Inspector | `npx @modelcontextprotocol/inspector ../.venv/bin/python src/server.py` |
-| LLM agent | `../.venv/bin/python src/llm_agent.py` |
+| Function tests | `../../.venv/bin/python -m pytest tests/test_functions.py -v` |
+| MCP server tests | `../../.venv/bin/python -m pytest tests/test_mcp_server.py -v` |
+| Full S03.02 suite with coverage | `../../.venv/bin/python -m pytest --cov=src --cov-report=term-missing --cov-fail-under=80` |
+| Inspector | `npx @modelcontextprotocol/inspector ../../.venv/bin/python src/server.py` |
+| LLM agent | `../../.venv/bin/python src/llm_agent.py` |
 
 Inspector uses Node.js/npm through `npx`. The agent reads `OPENAI_API_KEY` from
 the environment and makes paid model requests. Keep the key out of source code
@@ -353,10 +353,10 @@ source file.
 
 Inspector is an interactive MCP client in the browser. It is the first time our
 server is used by a program we did not write, which is the real test of whether
-the tool descriptions and schemas make sense on their own. Launch it from R1:
+the tool descriptions and schemas make sense on their own. Launch it from S03.02:
 
 ```bash
-npx @modelcontextprotocol/inspector ../.venv/bin/python src/server.py
+npx @modelcontextprotocol/inspector ../../.venv/bin/python src/server.py
 ```
 
 The two arguments after `inspector` are the command Inspector will run to start
@@ -459,10 +459,10 @@ which is why they still need the behavioural tests described below.
 
 ### First live run and server logs
 
-Run from R1 with the API key exported:
+Run from S03.02 with the API key exported:
 
 ```bash
-../.venv/bin/python src/llm_agent.py
+../../.venv/bin/python src/llm_agent.py
 ```
 
 The observed run completed successfully. With timestamps and source locations
@@ -499,7 +499,7 @@ Check that arguments match the request and that missing records are reported
 without invented facts. A correct final answer alone could be a guess, so it
 is not enough evidence of correct tool use.
 
-## What you should be able to explain after R1
+## What you should be able to explain after S03.02
 
 If you can answer these from memory, the basics are in place.
 
@@ -528,12 +528,12 @@ These are recorded results, not a fresh test run on every README edit.
 
 | Symptom | What to check |
 | --- | --- |
-| `Connection closed` after running from `src` | Run from R1. Otherwise `src/server.py` resolves to `src/src/server.py`. |
-| Packages load from global Homebrew Python | Use `../.venv/bin/python` explicitly. The shell prompt alone does not prove which interpreter is running. |
-| Fixture file not found | Check the working directory; data paths are relative to R1. |
+| `Connection closed` after running from `src` | Run from S03.02. Otherwise `src/server.py` resolves to `src/src/server.py`. |
+| Packages load from global Homebrew Python | Use `../../.venv/bin/python` explicitly. The shell prompt alone does not prove which interpreter is running. |
+| Fixture file not found | Check the working directory; data paths are relative to S03.02. |
 | Inspector connects but tools stay blank or time out | Inspect Protocol, Console, and terminal output. Try reconnecting. Connection alone is not a passed test. |
 | No visible `PASSED` labels | Run pytest with `-v`; its default output may show dots. |
-| API authentication fails | Check the key exported in the launching shell. The R1 agent relies on the environment; it does not load a project `.env` file. |
+| API authentication fails | Check the key exported in the launching shell. The S03.02 agent relies on the environment; it does not load a project `.env` file. |
 | Server works in tests but breaks under a client | Look for `print` calls in `server.py` or `functions.py`. Stdout is the protocol channel under stdio. |
 
 ## Remaining work
@@ -542,7 +542,7 @@ The next checks are to inspect the agent's exact tool calls and automate the
 agent scenarios. The current script handles one hardcoded question per run;
 interactive input and conversation history have not been added.
 
-Before treating R1 as independently reproducible, reconcile its stage dependencies
+Before treating S03.02 as independently reproducible, reconcile its stage dependencies
 with the shared environment used here. Add meaningful automated agent tests to
 bring full-source coverage above the required 80%.
 

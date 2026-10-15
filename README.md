@@ -1,30 +1,70 @@
-# production-agent-platform
+# AI Production Systems
 
-A hands-on Python-to-agent engineering learning path. The learner writes every function and test; scaffolds provide contracts, synthetic data, and reproducible environments.
+`production-agent-platform` is a hands-on learning repository for building and
+understanding production AI systems. Work is grouped by subject area. The section
+numbers organize the curriculum; they do not require completing every topic in
+numerical order. Our current starting point is S03.
 
-- [R0 — Python recap: functions](r0-python-recap-functions/README.md): ready to start.
-- [R1 — Functions to MCP tools](r1-functions-to-mcp-tools/README.md): using FastMCP to expose python functions as explorable tools...
+## Curriculum
 
-Each stage is self-contained. Start in R0 and follow its README. Empty source files and test folders are intentional: passing scaffold checks does not verify functionality.
+| Section | Topic | Status |
+| --- | --- | --- |
+| [S00](S00-Enterprise-AI-and-Solution-Discovery/README.md) | Enterprise AI and Solution Discovery | Planned |
+| [S01](S01-Production-AI-Application-Architecture/README.md) | Production AI Application Architecture | Planned |
+| [S02](S02-LLMs/README.md) | LLMs | Planned |
+| [S03](S03-AI-Agents-Tools-and-MCP/README.md) | AI Agents Tools and MCP | Started |
+| [S04](S04-AI-Agents-Evals/README.md) | AI Agents Evals | Planned |
+| [S05](S05-Agentic-Workflows-and-Harnesses/README.md) | Agentic Workflows and Harnesses | Planned |
+| [S06](S06-RAG-Systems/README.md) | RAG Systems | Planned |
+| [S07](S07-AI-Agents-Governance/README.md) | AI Agents Governance | Planned |
+| [S08](S08-AI-Agents-Security/README.md) | AI Agents Security | Planned |
+| [S09](S09-AI-Agents-Observability/README.md) | AI Agents Observability | Planned |
 
-The future roadmap is R2 bounded agent, R3 retrieval and evals, R4 orchestration and human approval, R5 API and OAuth, R6 observability, R7 Azure deployment, R8 architecture and governance, R9 release, and R10 Bedrock. These stages are planned, with no folders or implementations yet.
+All ten sections have folders and landing READMEs. S03 contains the current
+projects; the other sections are marked planned and have no exercises or code
+yet. This subject-based index replaces the earlier R0–R10 roadmap.
 
-## Python packages
+## Start with S03
 
-[requirements.txt](requirements.txt) lists OpenAI Agents SDK, Microsoft Agent Framework, FastMCP, MCP, Pydantic, and our testing and linting tools. Install them into the root virtual environment from this folder:
+1. [S03.01: Python Functions](S03-AI-Agents-Tools-and-MCP/S03.01-Python-Functions/README.md)
+   covers the Python foundation using ticket fixtures.
+2. [S03.02: Functions to MCP Tools](S03-AI-Agents-Tools-and-MCP/S03.02-Functions-to-MCP-Tools/README.md)
+   exposes functions through MCP, tests them, and connects a simple LLM agent.
+
+Each subsection keeps its source, tests, fixtures, dependency manifest, and
+lockfile together. Subsections do not import one another. Some code and tests
+were developed with agent assistance; verification status is recorded in the
+subsection documentation.
+
+## Python environment
+
+The existing local workflow uses the shared root `.venv`. The
+[requirements.txt](requirements.txt) file lists the SDKs and development tools.
+From the repository root:
 
 ```bash
 uv pip install --python .venv/bin/python -r requirements.txt
-```
-
-Activate the shared environment from the repository root:
-
-```bash
 source .venv/bin/activate
-cd r1-functions-to-mcp-tools  # or r0-python-recap-functions
+cd S03-AI-Agents-Tools-and-MCP/S03.02-Functions-to-MCP-Tools
 python -m pytest --cov=src --cov-report=term-missing --cov-fail-under=80
 ```
 
-The environment stays active when you change folders. Use `python` and `python -m pytest` while it is active; plain `uv run` inside a stage selects that stage's environment instead. Run `deactivate` to exit.
+Alternatively, from either subsection folder use `../../.venv/bin/python`
+explicitly. Plain `uv run` selects the subsection's environment instead. The root
+package list is unpinned; subsection manifests and lockfiles remain available for
+isolated checks. S03.02's own manifest does not yet include the OpenAI Agents SDK,
+so its isolated environment is not sufficient for the agent example.
 
-This is an unpinned package list for the shared local environment. Each stage retains its `pyproject.toml` and `uv.lock` for isolated CI checks.
+## Naming migration
+
+| Previous project | Current location |
+| --- | --- |
+| `r0-python-recap-functions` (R0) | `S03-AI-Agents-Tools-and-MCP/S03.01-Python-Functions` |
+| `r1-functions-to-mcp-tools` (R1) | `S03-AI-Agents-Tools-and-MCP/S03.02-Functions-to-MCP-Tools` |
+
+The directory move preserves the existing code and evidence. Earlier log entries
+using R0 and R1 refer to these same projects. Ignored environments and caches
+remain at their old local locations to preserve local state; those old folders
+are not part of the published structure. Use the shared root environment for the
+commands above. Local vendor references remain in the ignored `documentation/`
+folder at the repository root.

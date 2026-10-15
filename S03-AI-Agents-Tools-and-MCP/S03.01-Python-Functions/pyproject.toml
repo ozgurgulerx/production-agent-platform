@@ -1,5 +1,5 @@
 [project]
-name = "r0-python-recap-functions"
+name = "s03-01-python-functions"
 version = "0.1.0"
 description = "Python recap through ticket and policy functions"
 readme = "README.md"

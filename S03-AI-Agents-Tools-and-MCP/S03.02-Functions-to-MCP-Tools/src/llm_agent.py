@@ -6,7 +6,7 @@ from agents.mcp import MCPServerStdio
 
 
 async def main():
-    # Start the MCP server. Run this script from the R1 folder.
+    # Start the MCP server. Run this script from the S03.02 folder.
     async with MCPServerStdio(
         params={
             "command": sys.executable,

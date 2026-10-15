@@ -1,4 +1,4 @@
-"""R0 — tickets basics. Plain Python over a list of dicts."""
+"""S03.01 — tickets basics. Plain Python over a list of dicts."""
 import json
 from pathlib import Path
 

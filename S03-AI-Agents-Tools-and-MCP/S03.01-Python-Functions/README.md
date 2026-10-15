@@ -1,10 +1,10 @@
-# R0 — Python recap: functions
+# S03.01: Python Functions
 
 Practise file reading, lists, dictionaries, filtering, validation, exceptions, and tests with synthetic support tickets and policies. This stage is ready to start; `src/functions.py` is deliberately empty and you write every function and test. No solution or test implementation is supplied.
 
 ## Start
 
-From this folder, run `source ../.venv/bin/activate` to use the shared root environment (see the root README for installation). Write tests in `tests/`, implement the contracts below, and run `python -m pytest --cov=src --cov-report=term-missing --cov-fail-under=80`. Imports resolve from `src`, so tests can import `functions`. Run `python -m ruff check .` and `python -m ruff format --check .` before recording progress.
+From this folder, run `source ../../.venv/bin/activate` to use the shared root environment (see the root README for installation). Write tests in `tests/`, implement the contracts below, and run `python -m pytest --cov=src --cov-report=term-missing --cov-fail-under=80`. Imports resolve from `src`, so tests can import `functions`. Run `python -m ruff check .` and `python -m ruff format --check .` before recording progress.
 
 ## Function contracts
 
@@ -21,4 +21,4 @@ For examples, the supplied tickets filtered to `open` with limit 2 produce summa
 
 Cover both fixture files and temporary files: empty lists, missing files, malformed JSON, wrong top-level types, and non-object items. Check default listing, every status, file order, filtering before limiting, exact summary keys, limits 1 and 50, and invalid limits (including `True`) and statuses. Check full records with optional fields, exact IDs, invalid IDs, unknown IDs, empty inputs, and that returned results do not change the original records when edited.
 
-Finish when your own tests pass with at least 80% coverage and lint/format checks pass. Until you write tests, pytest exits 5: scaffold only—functionality unverified. Continue to R1 after completing this stage.
+Finish when your own tests pass with at least 80% coverage and lint/format checks pass. Until you write tests, pytest exits 5: scaffold only—functionality unverified. Continue to S03.02 after completing this stage.
