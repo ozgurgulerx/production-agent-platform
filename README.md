@@ -1,4 +1,4 @@
-![The tokens must flow: pixel art of a desert server room with glowing token streams](docs/images/tokens-must-flow.png)
+![The tokens must flow: pixel art of a desert server room with glowing token streams](https://raw.githubusercontent.com/ozgurgulerx/production-agent-platform/main/docs/images/tokens-must-flow.png)
 
 # Production AI
 
