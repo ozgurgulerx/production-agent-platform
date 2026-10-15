@@ -4,7 +4,7 @@
 
 [![GitHub stars](https://img.shields.io/github/stars/ozgurgulerx/production-agent-platform?style=flat)](https://github.com/ozgurgulerx/production-agent-platform/stargazers)
 
-This repository is about Production AI.
+Hands-on reference implementations for taking LLM agents from prototype to production — tools, MCP, evals, security, observability.
 
 ## Sections
 
