@@ -6,12 +6,13 @@ to a tool an LLM agent can select. It is the current starting point in the
 
 ## Learning order
 
-| Subsection | What it covers | Verification recorded on 2026-10-15 |
-| --- | --- | --- |
-| [S03.01: Python Functions](S03.01-Python-Functions/README.md) | Read ticket data and practise lookup, filtering, and aggregation | 5 tests pass; 100% coverage; existing lint/format failures |
-| [S03.02: Functions to MCP Tools](S03.02-Functions-to-MCP-Tools/README.md) | Expose functions through FastMCP, test the MCP interface, inspect calls, and connect an OpenAI Agents SDK agent | 16 tests pass; 76.47% coverage, below the required 80%; existing lint/format failures |
+| Subsection | What it covers |
+| --- | --- |
+| [S03.01: Python Functions](S03.01-Python-Functions/README.md) | Read ticket data and practise lookup, filtering, and aggregation |
+| [S03.02: Functions to MCP Tools](S03.02-Functions-to-MCP-Tools/README.md) | Expose functions through FastMCP, test the MCP interface, inspect calls, and connect an OpenAI Agents SDK agent |
+| [S03.03: MCP + OAuth 2.1](S03.03-MCP-OAuth2.1/README.md) | Add authentication and authorization with Keycloak, authorization-code flow with PKCE, token validation, and permission scopes |
 
-Start with S03.01, then continue to S03.02. Each project has its own source,
+Start with S03.01, then continue to S03.02 and S03.03. Each project has its own source,
 fixtures, tests, manifest, and lockfile. Detailed explanations, commands, and
 Inspector screenshots stay in the project READMEs.
 
