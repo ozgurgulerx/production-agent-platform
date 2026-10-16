@@ -1,9 +1,12 @@
 
-import json 
+import json
+from pathlib import Path
+
+STAGE_ROOT = Path(__file__).resolve().parents[1]
 
 def load_json(path):
     #create a list of dictionaries ticket we will iterate over
-    with open(path) as file:
+    with (STAGE_ROOT / path).open() as file:
         return json.load(file)
 
 def list_tickets(status=None, customer_id=None):
