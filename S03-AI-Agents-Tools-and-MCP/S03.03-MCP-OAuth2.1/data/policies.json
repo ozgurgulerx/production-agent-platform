@@ -1,0 +1,7 @@
+[
+  {"id": "POL-REFUND-01", "title": "Refund window", "text": "Refunds are available within 30 days of the transaction date. After 30 days a credit note is offered instead."},
+  {"id": "POL-REFUND-02", "title": "Refund method", "text": "Refunds are returned to the original payment method only. Refunds to a different card or account are never permitted."},
+  {"id": "POL-REFUND-03", "title": "Approval threshold", "text": "Refunds above 500 GBP require approval by a supervisor before they are issued. Below 500 GBP an agent may approve."},
+  {"id": "POL-DISPUTE-01", "title": "Disputed charges", "text": "A disputed charge is investigated within 5 working days. The customer is informed of the outcome in writing."},
+  {"id": "POL-DATA-01", "title": "Customer data", "text": "Agents may view only the fields needed for the ticket. Card numbers and national insurance numbers are never shown or logged."}
+]
