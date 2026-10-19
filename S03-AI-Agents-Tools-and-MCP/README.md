@@ -11,8 +11,9 @@ to a tool an LLM agent can select. It is the current starting point in the
 | [S03.01: Python Functions](S03.01-Python-Functions/README.md) | Read ticket data and practise lookup, filtering, and aggregation |
 | [S03.02: Functions to MCP Tools](S03.02-Functions-to-MCP-Tools/README.md) | Expose functions through FastMCP, test the MCP interface, inspect calls, and connect an OpenAI Agents SDK agent |
 | [S03.03: MCP + OAuth 2.1](S03.03-MCP-OAuth2.1/README.md) | Add authentication and authorization with Keycloak, authorization-code flow with PKCE, token validation, and permission scopes |
+| [S03.04: MCP Tool Design](S03.04-MCP-Tool-Design/README.md) | Design intent-level tools with precise descriptions, keep deterministic workflows in code, and reduce tool-selection ambiguity |
 
-Start with S03.01, then continue to S03.02 and S03.03. Each project has its own source,
+Start with S03.01, then continue to S03.02, S03.03, and S03.04. Each implementation project has its own source,
 fixtures, tests, manifest, and lockfile. Detailed explanations, commands, and
 Inspector screenshots stay in the project READMEs.
 
