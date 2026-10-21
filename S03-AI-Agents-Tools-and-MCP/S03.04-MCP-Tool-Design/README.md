@@ -1,5 +1,7 @@
 # MCP Tool Design
 
+> **Protocol scope:** This chapter’s wire-level examples describe MCP **2025-11-25**, including its initialization lifecycle. They are not a migration guide for later revisions.
+
 “How would you expose our systems to an agent?” is one of the most common architect questions. The weak answer is “wrap the APIs as tools”. The strong answer is “I’d start from what the agent needs to get done, build a small set of **intent-level tools** with precise descriptions, keep the deterministic logic in code, and measure wrong-tool rate before adding more.” The sections below turn that answer into concrete design decisions and evaluation checks.
 
 ## Designing the tool interface
@@ -123,6 +125,8 @@ def search_documents(
 7. **Keeps arguments flat and explicit.** Prefer simple arguments where they fit, and an enum to unconstrained text where the set is closed; retain structured objects when they express meaningful relationships, and state units and currency (`amount`, `currency: "GBP"`). Where precision matters, say how amounts are formatted.
 8. **Uses names that stay meaningful.** Use consistent verb-noun names (`find_tickets`, `get_ticket`, `issue_refund`) and avoid generic ones such as `search` or `get`. Gateways and hosts may prefix tool names with the server or target name, and two servers can expose the same name, so choose names that still make sense when prefixed. The optional `title` field can carry a display name.
 
+**Test naming choices.** Compare `support_find_tickets` with `find_support_tickets` on the same evaluation cases; prefix placement is a hypothesis, not a universal convention. Keep behavior unchanged during this comparison. [Anthropic’s naming guidance](https://www.anthropic.com/engineering/writing-tools-for-agents#namespacing-your-tools)
+
 **Link to your code.** Your S03.02 docstrings, such as "Get the full details of the ticket by its id.", are the minimal form. They work with three distinct tools, but they would not hold up once similar tools appear. Upgrading them is a good first change in S03.04.
 
 **Two practical points**
@@ -148,6 +152,8 @@ A raw API response may contain far more than the task needs. A tool should retur
 ```
 
 The second uses readable field names, only the fields that matter, and ids the model can pass to the next tool. If the result is a list, say when it's cut off (`"showing 5 of 23, narrow the search"`) so the model knows there is more. Where results can be large, a `detail` argument (concise by default, full on request) lets the model choose how much it needs; [Anthropic’s guidance on writing tools for agents](https://www.anthropic.com/engineering/writing-tools-for-agents) discusses this pattern.
+
+**Test result presentation.** Pair readable labels with stable IDs needed by subsequent calls. Compare JSON, Markdown or XML presentations using equivalent information; measure correctness and tokens. Preserve the MCP structured result contract when experimenting with its text presentation. [Anthropic’s result guidance](https://www.anthropic.com/engineering/writing-tools-for-agents#returning-meaningful-context-from-your-tools)
 
 **2. Errors: say what went wrong and what to try**
 
@@ -268,6 +274,8 @@ Now the last piece of S03.04: **the eval, which is how you prove the design is b
 
 **Why it exists.** "Fewer, better tools work better" is a claim. Tool-count advice such as "12–20 tools" is an illustrative rule of thumb here, not a sourced recommendation or universal target; the useful set depends on the tasks and model. The eval is the evidence.
 
+**From prototype to evaluation.** Manually exercise a local prototype and gather user feedback before choosing representative tasks. Run one bounded model/tool loop per case, retaining full call/result transcripts. An agent can suggest changes from those transcripts; verify its diagnosis against observed behavior and test proposed changes on development cases before held-out evaluation. Supply relevant SDK documentation when requesting implementation suggestions. [Anthropic’s development workflow](https://www.anthropic.com/engineering/writing-tools-for-agents#how-to-write-tools)
+
 **The setup**
 
 - **Three versions of the same server.** A: raw endpoint-shaped tools (say 40), B: those same tools with improved descriptions, and C: a curated set (say 8) with comparably clear descriptions. A versus B tests wording; B versus C tests the additional effect of consolidation. Keep backend behavior, data, permissions, prompts, model settings and budgets comparable. If schemas or output formats also change, report that as a bundled redesign rather than claiming to isolate tool count.
@@ -294,11 +302,15 @@ Define wrong-tool rate as incorrect selections divided by tool calls, and also r
 
 Read the tool-call trace, not only the final answer. A model can reach the right answer by a wasteful or lucky path, and the trace is where the design differences show.
 
+**Turn symptoms into experiments.** Repeated retrieval calls suggest testing page sizes or response limits; argument errors suggest testing descriptions or examples. Neither proves the cause. Change one factor and compare traces. [Anthropic’s evaluation guidance](https://www.anthropic.com/engineering/writing-tools-for-agents#running-an-evaluation)
+
 **What the result looks like.** A small table with three server variants by two models by the five metrics. Treat improvement in wrong-tool rate, calls and tokens as a hypothesis, not an expected verdict. Report honestly if it doesn't: with few tools or a strong model the gap can be small, and that finding is still useful, since it tells you where the ceiling sits for your case.
 
 **Use it as a loop.** When a question fails, look at the trace and fix the cause: a vague description, a missing "not for X" sentence, an ambiguous output. Then rerun. Most of the improvement in tool design comes from this loop.
 
 **Interview line:** "I don't trust tool design by taste. I build a small eval of realistic questions, compare raw tools, description-improved tools, and curated tools on two models, and compare success, wrong-tool rate, calls and tokens from the traces."
+
+**Off-the-shelf alternative: MCPJam.** [MCPJam](https://www.mcpjam.com/) offers MCP testing, debugging and behavioral evaluation. It is worth comparing with the proposed learner-owned harness, not another required build. A custom harness makes scoring rules and experimental controls explicit; an existing tool may reduce setup work. Either needs reproducible tasks, traces and outcome checks. Keep protocol conformance separate from model task success. **TODO:** assess whether its scoring and trace export meet this stage's requirements if selecting an evaluation runner; no MCPJam integration is implemented here.
 
 ### 7. Change tools without breaking agents
 
@@ -383,6 +395,25 @@ The conservative `destructiveHint` marks a consequential balance-changing operat
 - Write redacted audit events: who, which tool, which ticket, outcome, reason code. Not tokens or full customer data.
 - Classify failures (auth, policy, validation, state conflict, downstream, timeout) so dashboards show what is going wrong.
 - Set latency budgets and rate limits per caller and per tool.
+
+#### Operations one-pager: from a call to a recoverable service
+
+This combines the operational concerns here with [S03.06's boundary operations](../S03.06-Client-as-Trust-Boundary/README.md#12-operate-and-defend-the-boundary). It is a review checklist for a future deployment, not a claim that the teaching server implements it.
+
+| Concern | Design decision | Evidence to retain |
+|---|---|---|
+| Deployment and versioning | Pin runtime, dependencies, tool contracts and protocol; test the actual client/server combination before rollout | Manifest/lock versions, redacted protocol trace, compatibility cases and rollback plan |
+| Correlation | Propagate trace context through host, adapter and backend where supported; map model call ID, JSON-RPC ID and operation key without conflating them | One trace linked to the authoritative operation record and redacted audit event |
+| Latency | Separate model generation, catalogue discovery, queueing, authorization, approval wait, backend execution and recovery | Critical-path timings and concurrent spans; do not sum overlapping spans as elapsed time |
+| Replica races | Store operation keys and outcomes durably; enforce balance/version preconditions atomically across workers | Two workers submitting the same intent produce one effect; distinct intents cannot overspend |
+| Retry ownership | One layer owns retry policy within a shared deadline and attempt budget | Lost-response trace reconciles the existing intent without a new write key |
+| Graceful shutdown | Stop admitting work, drain within a deadline, persist unresolved operation state and cancel where supported | Restart recovers pending/unknown outcomes; cancellation is not reported as rollback |
+| Incident response | Quarantine compromised capabilities, stop credential issuance/dispatch, review egress and affected persistent context | Revocation time, affected operation IDs, containment decisions and a recovery record |
+| Regression capture | Turn a redacted failure into a held-out fixture with both safety and legitimate-success assertions | Before/after result tied to contract, policy and model versions |
+
+[W3C Trace Context](https://www.w3.org/TR/trace-context/) defines `traceparent` and `tracestate` for distributed correlation. Use instrumentation supported by the selected transport/runtime; MCP does not automatically make every backend span appear. Incoming trace metadata is not an authenticated principal, approval or idempotency key. Keep secrets and personal data out of headers and trace attributes.
+
+**Diagnostic example:** latency doubles while errors stay flat. Compare model time, queueing, refresh/JWKS requests, backend time and human wait before changing retry limits. A slow successful call and an unknown committed write require different responses. The S03.03 process-local ledger cannot satisfy restart or replica evidence; those remain later build cases.
 
 ### 11. Mock interview: pressure-testing the design
 

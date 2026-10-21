@@ -2,6 +2,35 @@
 
 > **Current checkpoint — 16 October 2026:** Keycloak login and token issuance have been demonstrated. The MCP server now implements JWT validation, per-tool scopes, and simulated refunds with team/balance/limit checks and human confirmation. The stage test suite passes (119 tests; 91% overall coverage). A live Keycloak token now successfully retrieved T-1003 through the authenticated MCP tool; live refund denial/confirmation checks remain. Earlier checkpoint sections below are historical; see the final implementation section for current commands and limitations.
 
+## Priority TODO: revision baseline and protocol conformance
+
+**Proposed work, not completed verification.** The current `pyproject.toml` and `uv.lock` pin `mcp==1.26.0`, not `mcp>=2,<3`. The installed SDK inspected on 21 October 2026 declares latest protocol `2025-11-25`. Keep this baseline for the exercise; a move to the newer lifecycle requires a separate SDK and protocol compatibility review. A package major version alone is not proof of the protocol exercised on the wire.
+
+- [ ] Recheck dependency pins and installed supported revisions before running the suite; record transport and runtime configuration.
+- [ ] Select and pin a release/commit of the [official MCP Conformance framework](https://github.com/modelcontextprotocol/conformance). Inspect its revision-specific requirements and server-role coverage before invoking it; do not assume a default suite targets this stage's revision.
+- [ ] Run applicable lifecycle, tool-listing and tool-call checks against the isolated local server, with synthetic data and appropriate test authentication. Identify any harness adaptations required by its scenarios rather than weakening server authorization to make tests pass.
+- [ ] Save suite version, target revision, requirement set, executed checks, skips, failures and redacted wire evidence. Zero executed checks is not success; known failures stay visible.
+- [ ] Add a CI invocation only after reproducing the run locally. This README does not install the suite or modify CI.
+
+**Sample scenario:** a test client exercises the 2025-11-25 lifecycle and calls an authorized read tool. Separately, the stage's authorization tests submit an expired token and a caller without refund scope. Assert the documented rejection at the correct boundary and zero refund effects. Keep these application-policy checks separate from the protocol suite; do not assume the external suite covers the business rules.
+
+| Evidence to record | Current status |
+|---|---|
+| SDK, selected suite version, protocol requirement set and transport | SDK baseline recorded above; suite selection TODO |
+| Protocol checks: executed, passed, failed and skipped | Not run |
+| Authorization checks associated with this conformance exercise | Not run as part of this exercise; existing verification appears later |
+| CI reproduction | TODO after local evidence |
+
+A future claim should say “tested with [suite version], against [revision/requirement set], with [coverage and exceptions].” Passing selected scenarios is not a security certification or proof of every optional feature. Do not add a blanket “conformance-tested” badge before evidence exists.
+
+## Protocol lifecycle and transport scope
+
+This OAuth demonstration uses MCP **2025-11-25** through the pinned 1.26.0 SDK and Streamable HTTP. `src/mcp_demo.py` opens an authenticated HTTP connection, creates a `ClientSession`, initializes it, calls the selected tool and closes the contexts. The SDK performs `initialize` → matching result → `notifications/initialized`. The demo does not call `tools/list`: the CLI already names the operation. Elicitation support is declared through the client callback. The copied `src/llm_agent.py` is the earlier stdio example, not an authenticated HTTP agent for this server.
+
+Stdio connects a client-launched subprocess through pipes; Streamable HTTP connects to a separately running endpoint and can use SSE for messages. Transport/session identifiers do not establish a user's authority. See the [versioned transport contract](https://modelcontextprotocol.io/specification/2025-11-25/basic/transports) and the [S03 overview](../README.md#mcp-in-two-minutes).
+
+The [2026-07-28 release](https://blog.modelcontextprotocol.io/posts/2026-07-28/) changes the lifecycle to a stateless core and deprecates sampling, roots and logging; deprecated does not mean already removed. This chapter's confirmation flow describes the older revision. No migration or new sampling implementation is part of this exercise.
+
 ## What we are going to build
 In S03.01 we built the python functions.
 In S03.02 we exposed them as MCP tools through an MCP server we created with FastMCP. 
@@ -1102,3 +1131,41 @@ You can also test business-rule denials with Mert, each with a fresh login:
 Expect `execution_limit_exceeded` and `team_mismatch`, respectively, before confirmation. Automated tests already exercise these restrictions; record live results after actually running them.
 
 The demonstration connects three separate decisions: **Keycloak grants scopes → the MCP tool checks its required scope → refund policy and human confirmation determine whether this particular action executes.**
+
+
+## End-to-end narration: authenticated CLI and simulated refund
+
+This sequence explains the current code. It is not a new live execution, and it does not replace the observed-evidence and remaining-live-check sections above. There is no LLM loop in this CLI.
+
+| Step | Message or boundary | Owner and effect |
+|---|---|---|
+| 1 | CLI discovers `/mcp` protection through a 401 challenge, then resource and trusted issuer metadata | Client learns authorization endpoints; discovery itself grants no access |
+| 2 | Browser authorization request with PKCE and state; local callback; authorization-code exchange | Keycloak authenticates the user and issues an access token; client validates callback state and keeps tokens in memory |
+| 3 | HTTP bearer-authenticated `initialize`; server result; `notifications/initialized` | Resource server validates access token; SDK establishes the pinned protocol session |
+| 4 | `tools/call` for the explicitly selected tool | Schema validation and per-tool scope checks precede function execution; no preceding `tools/list` is required by this CLI |
+| 5a | For `get_ticket`, wrapper reads fixture and returns the MCP result | Client prints data; no ledger change |
+| 5b | For `issue_refund`, server checks scope, trusted subject/team mapping, amount and balance | Failure stops before confirmation and before ledger mutation |
+| 6 | Server sends `elicitation/create` while the tool call is pending | Client accepts only the supported boolean form; exact terminal `YES` becomes acceptance, other answers decline, EOF cancels |
+| 7 | Elicitation response, then scope/expiry recheck and locked ledger check/update | Accepted eligible request creates one process-local simulated refund; no payment service is called |
+| 8 | Final `tools/call` response, then connection cleanup | Decline returns `not_executed`; unavailable confirmation returns a tool error; CLI finishes |
+
+The elicitation request has its own JSON-RPC ID while the original tool request awaits completion. OAuth `state` protects the login callback; a session ID groups transport activity; a refund UUID identifies a recorded result. None is a durable operation key for retry deduplication. This implementation has no such key: a retry after a lost response can record another refund if balance permits. A restart loses the ledger. S03.04's reconciliation and idempotency design is future behavior, not an existing property.
+
+The read and any dependent decision are sequential. Independent reads may be scheduled concurrently by a different host; writes sharing a balance require atomic backend enforcement, not merely ordered model calls. This server bounds confirmation waiting to 120 seconds and rechecks balance under a process-local lock. That does not supply a whole-task deadline or multi-replica protection. For an unknown write outcome, stop and reconcile rather than automatically retry; durable reconciliation remains a build task.
+
+## Identity lifecycle: who stops what
+
+The table distinguishes current code from the deployment contract still needed. Token validation is implemented; a full identity lifecycle is not.
+
+| Event | Component that must act | Current behavior and remaining work |
+|---|---|---|
+| Access token expires | Client obtains a new token; resource server rejects expired use | CLI has no refresh grant or persistent token store. A new invocation logs in again. Server checks expiry at entry and after confirmation; no automatic retry of a consequential action |
+| Refresh is denied or user consent is no longer valid | Authorization server rejects renewal; client requires renewed login/consent or ends the task | Implement a bounded recovery flow only if refresh is added; never broaden scopes automatically. Protect refresh tokens and use issuer-supported rotation/replay controls |
+| Signing keys rotate | Resource server refreshes keys from its configured issuer endpoint | `PyJWKClient` uses the configured JWKS URL, a five-second fetch timeout and a 300-second cache lifetime. Rotation/unknown-key behavior needs an explicit integration test; never trust token-supplied key URLs |
+| User is disabled or permission revoked mid-task | Identity provider plus resource/backend authorization policy | Local signature/expiry checks do not prove immediate revocation. Existing code has no introspection or revocation feed; an already-issued JWT may remain accepted until expiry |
+| User loses access during confirmation | Host/backend rechecks current authority immediately before effect | Current code rechecks token scope/expiry and ledger balance but reuses the earlier principal/ticket snapshots. It does not reread changed team mappings or query Keycloak for revocation |
+| Cross-tenant record is requested | Backend binds verified identity to permitted tenant/resources on every read and write | Demo issuer/audience are fixed and refunds enforce a server-owned team mapping. Ticket/policy reads are not tenant-filtered; this is not complete tenant isolation |
+
+A production choice might combine short-lived access tokens with revocation signals or authenticated introspection, depending on required revocation latency and availability. Introspection reports token activity; it does not replace resource-specific business policy. [OAuth token introspection](https://www.rfc-editor.org/rfc/rfc7662.html) Refresh-token protection and renewal belong to the client/authorization-server design, not the model prompt. [OAuth security BCP](https://www.rfc-editor.org/rfc/rfc9700.html)
+
+Proposed lifecycle evidence: expire a token while approval is open, rotate signing keys, revoke an account while a task is running, deny refresh, and attempt a cross-tenant read and write. Record the maximum observed revocation delay, the rejection layer and backend effects. These cases are planned; existing unit-test and live evidence remains exactly as reported above. Deeper workload/agent identity belongs in S08.

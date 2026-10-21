@@ -499,6 +499,24 @@ Check that arguments match the request and that missing records are reported
 without invented facts. A correct final answer alone could be a guess, so it
 is not enough evidence of correct tool use.
 
+## Narrate one complete agent call
+
+The following is an illustrative successful path through the existing `src/llm_agent.py`, not a new captured run. The model may choose a different valid sequence. Record the interpreter and installed packages with any trace: the stage lockfile pins MCP 2.3.0, while the shared root environment can differ. See the [S03 protocol baseline](../README.md#protocol-baselines); do not assume v1 initialization messages for every v2 connection.
+
+| Step | Boundary/message | Effect |
+|---|---|---|
+| 1 | Script starts `src/server.py` with `MCPServerStdio` | Local server process starts; no ticket read yet |
+| 2 | SDK connects and obtains tool definitions using its supported protocol path | Host learns the three wrappers and schemas |
+| 3 | Runner sends instructions, the fixed T-1001 question and exposed definitions to the model | Model can propose a call; it has not read fixtures |
+| 4 | Model proposes `get_ticket(ticket_id="T-1001")` with a model call identifier | Host adapter maps that proposal to an MCP `tools/call` request |
+| 5 | MCP request gets a JSON-RPC request ID; server validates and invokes the wrapper | `functions.get_ticket` reads stage-local JSON; no external write |
+| 6 | Server returns content under that request ID; adapter associates it with the model call | Runner supplies the observation to the next model request |
+| 7 | Model returns its final answer; script prints it and exits the context managers | Connection and subprocess are cleaned up |
+
+A model call ID correlates model-facing messages; the JSON-RPC ID correlates one protocol request/response. Neither is a business **operation key** that deduplicates a write. A ticket ID identifies a record. This read-only stage has no application idempotency implementation. Its missing-ticket function returns `{"error":"not_found",...}` as data; do not automatically label every such payload an MCP `isError` result.
+
+**Dependencies and stopping.** The answer must wait for the ticket result. Independent ticket reads could run in parallel if the host supports it, but this script defines no parallel execution plan. It also sets no explicit application turn, token or wall-time budget; SDK defaults are not a documented application policy. For the later eval, specify those budgets, stop on final output or exhausted budget, and surface unavailable tools/errors rather than loop indefinitely. This is remaining design work, not a claim that these controls exist here.
+
 ## What you should be able to explain after S03.02
 
 If you can answer these from memory, the basics are in place.
