@@ -307,6 +307,8 @@ Report total measured spend divided by successful tasks, including failed attemp
 | 6. Cache comparison | Stable ordering, seeded shuffled ordering and append-only discovery; matched cold/warm runs. |
 | 7. Results and decision note | Tables, traces and a “when to use which” note; optional 30-step history experiment reported separately. |
 
+**Paper exercises first (see the [S03 exercise plan](../S03-EXERCISE-PLAN.md)):** (1) a sealed prediction sheet, strategy × metric with reasons, written before any build so results can disagree with you; (2) a large-result design for one real tool from your S03.04 exercise, covering the four delivery patterns, the artifact envelope and the follow-up question the aggregate cannot answer. The build below is exercise 3, after S04.
+
 **Minimum viable build:** complete steps 1 and 2, the keyword arm of step 3, the projection arm of step 5, and step 6; publish their results and decision note in step 7. Embeddings, namespace/native discovery, code mode, the other delivery arms and the 30-step investigation are optional follow-ups. Keep the same concurrency policy across the initial comparison.
 
 When implementing later, keep changes reviewable, each with visible evidence such as a token count or trace. Do not run a full cross-product of all experiments. The size sweep, discovery comparison, result comparison and cache comparison answer different questions.
@@ -375,6 +377,8 @@ The table above is a recall drill; this list is a reference index for implementa
 
 - [Anthropic tool-use caching](https://platform.claude.com/docs/en/agents-and-tools/tool-use/tool-use-with-prompt-caching): deferred definitions and prefix preservation.
 - [OpenAI MCP servers](https://developers.openai.com/api/docs/guides/tools-connectors-mcp): provider integration, distinct from implementing a local MCP server.
+- [Cloudflare: Code Mode](https://blog.cloudflare.com/code-mode/): an independent statement of strategy C; MCP tools converted to a typed TypeScript API that the model writes code against.
+- [MCP Conformance framework](https://github.com/modelcontextprotocol/conformance): protocol conformance is a separate test layer from the agent-level evaluation in this chapter; passing one says nothing about the other.
 
 The source reports supplied the chapter framing; public technical claims are linked to primary sources above. Research performance figures, unverified pricing and universal context thresholds are deliberately omitted. Advanced vector indexes, KV-cache sizing and reference runtimes remain outside this learner chapter.
 

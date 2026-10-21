@@ -125,3 +125,13 @@ so its isolated environment is not sufficient for the agent example.
 S03.02 includes one successful live agent run, but automated agent tests remain
 pending. The existing coverage gap, lint issues, and missing subsection-local
 agent dependency still need attention. See each subsection's README for details.
+
+## Further reading
+
+Verified on 21 October 2026 unless marked. Primary sources first; code to read second.
+
+- [MCP 2026-07-28 changelog](https://modelcontextprotocol.io/specification/2026-07-28/changelog): the normative delta from 2025-11-25; read after the explainer above to unlearn handshake-era assumptions.
+- [MCP Conformance framework](https://github.com/modelcontextprotocol/conformance): executable checks for clients and servers against 2025-11-25 and the 2026 revision; the basis of the conformance task in S03.03.
+- [MCP Python SDK](https://github.com/modelcontextprotocol/python-sdk): the implementation behind both `mcp 1.26.0` (S03.03) and `2.3.0` (S03.02); read `types.py` for the protocol-version list.
+- [Official reference servers](https://github.com/modelcontextprotocol/servers): breadth of examples; maturity varies per server.
+- [GitHub MCP Server](https://github.com/github/github-mcp-server): a production server with a large tool surface, scoped permissions and a documented injection incident (see S03.06).

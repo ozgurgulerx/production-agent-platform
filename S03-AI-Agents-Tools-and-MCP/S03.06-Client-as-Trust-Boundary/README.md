@@ -261,6 +261,12 @@ Specify a synthetic server that advertises poisoned metadata, returns hostile ti
 
 State what the design prevents, detects or leaves outside its control. Include answer contamination, remote behavior, coarse provenance, approval fatigue and bypass paths.
 
+### E. Red-team your own specification
+
+Write three attacks that your A–D design does not stop; at least one must not be prompt injection (supply chain, final-output exfiltration, resource exhaustion, a cached approval). For each, name the control that would close it and its cost in false denials. Then answer the twelve questions in section 12 using only your trace from part B; a question the trace cannot answer marks an incomplete trace.
+
+Self-grade A–D with the rubric in the [S03 exercise plan](../S03-EXERCISE-PLAN.md) (0–4 per part; under 3 means redo closed-book the next day). Save the result as a dated file in this folder.
+
 No implementation files, dependencies, fixtures or tests are supplied by this chapter.
 
 ## 11. Evaluate effects and usefulness separately
@@ -400,5 +406,14 @@ Questions to defend your design:
 The public protocol references above define the versioned mechanisms; CaMeL and FIDES motivate the information-flow discussion, and the linked scanner/benchmark projects provide supplementary evaluation methods. The proposed application contracts are teaching designs, not verified secure implementations. Framework release claims, incident counts and benchmark percentages are omitted where unnecessary to the lesson.
 
 Use [OWASP's LLM application risks](https://genai.owasp.org/llm-top-10/) to connect prompt injection, sensitive information disclosure and excessive agency to the scenarios; [OWASP's agentic security guidance](https://genai.owasp.org/initiatives/agentic-security-initiative/) broadens the agent-system discussion, and [MITRE ATLAS](https://atlas.mitre.org/) supplies an adversarial-technique vocabulary. These are review aids, not proof of coverage or certification. Keep each local test tied to a concrete attacker capability, control and observed effect.
+
+### Further reading (security)
+
+- [Invariant: GitHub MCP vulnerability](https://invariantlabs.ai/blog/mcp-github-vulnerability): the concrete confused-deputy chain this chapter's section 2 generalises; a public issue steers an agent with private-repo access into leaking data.
+- [Invariant: Toxic flow analysis](https://invariantlabs.ai/blog/toxic-flow-analysis): security as data-flow analysis across tools (untrusted source → sensitive read → external sink), not keyword filtering; the framing behind section 6.
+- [MCPTox, arXiv:2508.14925](https://arxiv.org/abs/2508.14925): a tool-poisoning benchmark built on real MCP servers; use it as the public counterpart to the adversarial fixture in section 10.
+- [Invariant tool-poisoning research](https://invariantlabs.ai/blog/mcp-security-notification-tool-poisoning-attacks): already cited in section 8.
+- [Snyk Agent Scan](https://github.com/snyk/agent-scan): a security scanner for agents, MCP servers and skills, listed alongside MCP-Scan in the scanner TODO; neither proves runtime safety.
+- Gateways with policy and OpenTelemetry: [Agentgateway](https://github.com/agentgateway/agentgateway) and [IBM ContextForge](https://github.com/IBM/mcp-context-forge) show where RBAC, federation and tracing sit when the trust boundary is a shared gateway rather than one host.
 
 **Status:** design and study material only. No implementation or tests exist in this stage; functionality is unverified. Scenarios and evaluation variants are proposed exercises, not measured results.

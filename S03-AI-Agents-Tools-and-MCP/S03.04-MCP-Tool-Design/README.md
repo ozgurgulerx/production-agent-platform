@@ -437,7 +437,7 @@ This combines the operational concerns here with [S03.06's boundary operations](
 
 **Expanded synthesis:** Tools are for a model, not a programmer, so don't just wrap the API. One tool per coherent operation, with clear inputs, authority, outcomes and recovery; fixed steps go inside it, judgement stays with the model and user. The description is the interface, and the first fix to test, not the only one. Results and errors are written for the model: compact, with candidates and next steps. Retrieved text is data, never authority. Authority lives in the server (scopes, policy, bound confirmation). Retries use stored state; partial failure and unknown outcomes are named in the result; races use conditional writes. Prove it with an eval, and treat tool definitions as a versioned contract: re-run the eval when they change.
 
-**Next: design exercise.** Pick a system you know and list its raw endpoints. Then follow the derivation steps in section 1: list the tasks, trace the raw call sequences, collapse the fixed runs, apply the boundary tests, and write one full tool contract.
+**Next: exercises.** Work through [EXERCISES.md](EXERCISES.md): derive a tool set from a system you know (not tickets), write one full contract in the section-9 shape, then run a mini eval inside S04. Session order and self-checks are in the [S03 exercise plan](../S03-EXERCISE-PLAN.md).
 
 ## Further reading
 
@@ -462,6 +462,12 @@ Grouped by what each source supports. Section numbers refer to this chapter.
 ### Platform controls (section 8)
 
 The APIM, AgentCore Gateway, Foundry and Agents SDK links are in section 8, next to the controls they describe.
+
+### Code to read (tool-surface design in the wild)
+
+- [Upstash Redis MCP](https://github.com/upstash/redis-mcp): a deliberate two-tool surface (`redis_run_commands`, `redis_search_docs`) instead of one tool per command; a counter-example to endpoint wrapping worth arguing for and against.
+- [GitHub MCP Server](https://github.com/github/github-mcp-server): a large real catalogue with toolsets, read-only mode and scoped tokens; study how it groups tools and names them.
+- [Playwright MCP](https://github.com/microsoft/playwright-mcp): browser actions as tools; good examples of intent-level naming and compact results (accessibility snapshots rather than screenshots).
 
 ### Not cited on purpose
 
