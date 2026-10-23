@@ -7,9 +7,9 @@ S03.04 established how to design each tool well. S03.05 asks what happens when t
 By the end of this stage you can answer, with your own numbers rather than opinions:
 
 1. What does a 50-tool catalogue cost per turn, and what does it do to tool selection?
-2. When does it pay to stop loading every tool definition up front (tool search), and when does it pay to let the model write code against the tools (code mode)?
+2. When does it pay to stop loading every tool definition up front (tool search), and when does it pay to let the model write code against the tools (code mode)? 
 3. How should a tool deliver a result too big to put in the context?
-4. Which approach would you pick for a given catalogue size and task type, and what evidence would change your mind?
+4. Which approach would you pick for a given catalogue size anvd task type, and what evidence would change your mind?
 5. How can a long-running agent reduce history without losing constraints, evidence or the status of an action?
 
 This is an engineering trade-off stage. The honest outcome may be "the gap is small for this catalogue", and that is still a result.
