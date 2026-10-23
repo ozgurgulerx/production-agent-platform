@@ -14,6 +14,7 @@ to a tool an LLM agent can select. It is the current starting point in the
 | [S03.04: MCP Tool Design](S03.04-MCP-Tool-Design/README.md) | Design intent-level tools with precise descriptions, keep deterministic workflows in code, and reduce tool-selection ambiguity |
 | [S03.05: MCP Context Efficiency](S03.05-MCP-Context-Efficiency/README.md) | Compare tool exposure, large-result delivery and retained history; design material with a bounded minimum build |
 | [S03.06: Client as Trust Boundary](S03.06-Client-as-Trust-Boundary/README.md) | Enforce task authority, approvals and disclosure policy; proposed attack matrix and effect-based evaluation |
+| [S03.F: Tools and MCP on Microsoft Foundry, built with Agent Framework](../S03-AI-Agents-Tools-and-MCP-Microsoft-Foundry-and-Agent-Framework/README.md) | Map the Foundry tool catalogue, `mcp` tool, toolbox, connection auth and gateway onto S03, and show how each is built with Agent Framework hosted or local MCP tools |
 
 Start with S03.01, then continue through S03.06. Each implementation project has its own source,
 fixtures, tests, manifest, and lockfile. Detailed explanations, commands, and
