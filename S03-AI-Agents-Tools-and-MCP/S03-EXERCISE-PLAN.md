@@ -28,7 +28,7 @@ Take the X1 tool set and multiply it the way S03.05 does: eight regions plus two
 2. Write the sealed prediction sheet (template at the end): strategy × metric, with a reason per cell, where B's discovery fails first, where C will not help. Date it.
 3. For one tool that returns a large result, design the four delivery patterns (download URL, chunked resource, projection, aggregate), the artifact envelope, and the follow-up question the aggregate cannot answer.
 4. Write the 30-step investigation's checkpoint: what must survive compaction (goal, open work, exact ids and amounts, operation status, changed constraints) and what may be dropped.
-5. State the minimum viable build you would run after S04, and the three failure kinds you would report (discovery, selection, arguments).
+5. State the minimum viable build you would run after S05, and the three failure kinds you would report (discovery, selection, arguments).
 
 **Deliverable:** `exercises/X2-scale.md` with the sealed sheet.
 **Self-check:** reduction ladder in the right order; truncation always flagged; handle carries id, hash, version; "summary is not an execution receipt" appears in the checkpoint rules; parallel calls and catalogue refresh are mentioned.
@@ -48,15 +48,15 @@ Use the X1 system and grant. A third-party server (the equivalent of `fx-rates`)
 **Self-check:** every attack has a backend assertion, not a model refusal; the matrix has at least one "no effect" cell you can explain; approval is bound to canonical arguments; the lifecycle case names the component, not "the system".
 **Defend it:** the twelve questions in S03.06 §12, answered from your traces only.
 
-### X4. Evaluate and decide (S03.04 §6 + S03.05 evaluation + S03.06 §11) — 1.5 h, paper now, build in S04
+### X4. Evaluate and decide (S03.04 §6 + S03.05 evaluation + S03.06 §11) — 1.5 h, paper now, build in S05
 
 1. Design the eval for X1–X3 as one suite: twenty questions over the 50-tool catalogue (lookups, multi-region, ambiguous, impossible, near-duplicate traps, large results), four attack trials, one lifecycle trial. Development versus held-out split.
 2. For each question: acceptable tool sequences, expected end state, deterministic checks. Attack trials score unauthorized effects and false denials separately.
 3. Metrics table: task success, cost per successful task, wrong-tool rate split by failure kind, discovery recall@5, tokens (input, cached, output), calls, latency, unauthorized or duplicate effects.
 4. Write the release-decision rule before running anything: what result would make you ship, hold, or revert a tool-design change ("selection improved but cost per success rose" must have an answer).
-5. Map this to the S04 build: this suite is the S04 scenario set; the capstone steps from the coverage review (read → auth → confirmation → lost response → restart → injection → revocation → quota → decision) are its ordering.
+5. Map this to the S05 build: this suite is the S05 scenario set; the capstone steps from the coverage review (read → auth → confirmation → lost response → restart → injection → revocation → quota → decision) are its ordering.
 
-**Deliverable:** `exercises/X4-eval-design.md`; becomes the S04 spec.
+**Deliverable:** `exercises/X4-eval-design.md`; becomes the S05 spec.
 **Self-check:** every question has an end-state check; attacks score effects not words; held-out cases exist; the decision rule is written before results.
 **Defend it:** "How do you prove consolidation helped rather than changing the task?", "What evidence would make you reverse your design?", "Would you ship?"
 
@@ -68,7 +68,7 @@ Use the X1 system and grant. A third-party server (the equivalent of `fx-rates`)
 | 1 | X1 | after the cram, one sitting | 2.5 h |
 | 2 | X2 | next day | 2 h |
 | 3 | X3 | next day | 2.5 h |
-| 4 | X4 | next day; feeds S04 | 1.5 h |
+| 4 | X4 | next day; feeds S05 | 1.5 h |
 | 5 | Closed-book redo of any self-check that failed; Anki for misses | following day | 1 h |
 | 6 | Transfer test: repeat X1 steps 1–2 on an unseen domain (payments) in 45 min | end | 45 min |
 | 7 | Commit `exercises/`; update the completion list | end | 30 min |

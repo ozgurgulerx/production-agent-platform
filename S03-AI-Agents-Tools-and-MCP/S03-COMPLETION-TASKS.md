@@ -1,6 +1,6 @@
 # S03 completion tasks (21 Oct 2026)
 
-Goal: S03.01–06 known cold, with two known soft spots (hands-on evidence, platform detail) closed by S04 and S03.03b. Tick in order within each group. Times are estimates. Merges the three reviews of 21 Oct; the coverage review's proposed S03.07–09 chapters are folded in here, not added.
+Goal: S03.01–06 known cold, with two known soft spots (hands-on evidence, platform detail) closed by S05 and S03.03b. Tick in order within each group. Times are estimates. Merges the three reviews of 21 Oct; the coverage review's proposed S03.07–09 chapters are folded in here, not added.
 
 ## A. Do now (before S03.03b)
 
@@ -45,15 +45,15 @@ S03.06 (~2 h):
 
 ## D. Build (the soft spots)
 
-- [ ] **S04 evals stage, target 1 Nov, with the capstone as the scenario set** (from the coverage review; replaces a separate S03.09). Each step is an eval case with a deterministic check: (1) trace a read-only request; (2) user-scoped auth, two tenants; (3) consequential action with bound confirmation; (4) response lost after backend commit; (5) worker restart and reconciliation; (6) hostile metadata or ticket content; (7) expired credentials, revoked access, changed schema; (8) quota exhaustion and latency regression; (9) inspect traces and backend state, justify recovery and the release decision. Harness: tool-selection accuracy, discovery recall, held-out questions, end-state checks, repeated runs. Conformance in CI. Note MCPJam as the off-the-shelf alternative; do not build on it.
+- [ ] **S05 evals stage, target 1 Nov, with the capstone as the scenario set** (from the coverage review; replaces a separate S03.09). Each step is an eval case with a deterministic check: (1) trace a read-only request; (2) user-scoped auth, two tenants; (3) consequential action with bound confirmation; (4) response lost after backend commit; (5) worker restart and reconciliation; (6) hostile metadata or ticket content; (7) expired credentials, revoked access, changed schema; (8) quota exhaustion and latency regression; (9) inspect traces and backend state, justify recovery and the release decision. Harness: tool-selection accuracy, discovery recall, held-out questions, end-state checks, repeated runs. Conformance in CI. Note MCPJam as the off-the-shelf alternative; do not build on it.
 - [ ] **S03.03b Foundry/Entra** (half day) and a platform paragraph in S03.06.
 - [ ] **S03.06 build at demo depth:** malicious `fx-rates` server, scanners, Docker MCP Gateway step, matrix with pass/fail evidence.
-- [ ] **S03.05:** minimum viable build only, after S04.
+- [ ] **S03.05:** minimum viable build only, after S05.
 - [ ] **Operations one-pager** (S03.04 §10 + S03.06 §12 merged): deployment, versioning, observability and latency decomposition, replica races and retry budgets, graceful shutdown, incident response and regression capture.
 
 ## E. Learn by heart, then integrated exercises
 
-Order decided 21 Oct: cram the chapters first, then do the four integrated exercises in `S03-EXERCISE-PLAN.md` (X1 system → tool set → contract; X2 scale; X3 trust boundary; X4 eval design, which becomes the S04 spec). Per-chapter exercises are skipped for now and kept as reference.
+Order decided 21 Oct: cram the chapters first, then do the four integrated exercises in `S03-EXERCISE-PLAN.md` (X1 system → tool set → contract; X2 scale; X3 trust boundary; X4 eval design, which becomes the S05 spec). Per-chapter exercises are skipped for now and kept as reference.
 
 - [ ] Cram per `S03-MCP-cram-plan.xlsx`; retrieval drills; misses to cards. (10–12 h)
 - [ ] X1–X4 in order, one per sitting, dated files under `exercises/`. (about 9 h)

@@ -21,7 +21,7 @@ Inspector screenshots stay in the project READMEs.
 
 ## Completion and evidence
 
-Use the [S03 completion checklist](S03-COMPLETION-TASKS.md) to track documentation, builds and recall separately. S03.04–06 contain design exercises; their descriptions are not evidence that the proposed servers, harnesses or controls have been implemented. The next build priority is S04 evaluation evidence; S03.05's minimum build follows it. Preserve the existing S03.03 live-check limitations.
+Use the [S03 completion checklist](S03-COMPLETION-TASKS.md) to track documentation, builds and recall separately. S03.04–06 contain design exercises; their descriptions are not evidence that the proposed servers, harnesses or controls have been implemented. The next build priority is S05 evaluation evidence; S03.05's minimum build follows it. Preserve the existing S03.03 live-check limitations.
 
 ## Protocol baselines
 
