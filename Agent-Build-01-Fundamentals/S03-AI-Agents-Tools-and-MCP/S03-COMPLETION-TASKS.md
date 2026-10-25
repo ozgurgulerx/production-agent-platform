@@ -53,6 +53,11 @@ S03.06 (~2 h):
 
 ## E. Learn by heart, then integrated exercises
 
+Study traces live in `study-log/` (one dated file per session). Gaps from them are listed here and become Anki cards.
+
+- [ ] **S03.05 gaps (quiz 23 Oct, 6/24):** the three decisions by name (exposure / computation / retention) and which strategy answers each; the reduction ladder before code mode; headroom arithmetic and output-cap parameter names (`max_output_tokens` / `max_tokens` / `max_completion_tokens`); the three enforcement layers for injected instructions (exposure, authorization, task grant); evidence reference and `query_artifact`. Re-ask cold next session; cards for each.
+
+
 Order decided 21 Oct: cram the chapters first, then do the four integrated exercises in `S03-EXERCISE-PLAN.md` (X1 system → tool set → contract; X2 scale; X3 trust boundary; X4 eval design, which becomes the S05 spec). Per-chapter exercises are skipped for now and kept as reference.
 
 - [ ] Cram per `S03-MCP-cram-plan.xlsx`; retrieval drills; misses to cards. (10–12 h)
