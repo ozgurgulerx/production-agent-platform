@@ -4,6 +4,39 @@
 
 An authenticated agent is not authorised to read a customer's ticket or issue a refund. This chapter follows identity from Ayşe's sign-in through retrieval and tool execution and separates, at every hop, three questions a client panel will ask separately: **who is calling, what did the token say, and who checked it**.
 
+### How to use this page
+
+Four routes through the same material; pick by what the next interview or build needs.
+
+| Route | Start | Then | Time |
+|---|---|---|---|
+| Learn the words | Sections 1–4 | Section 9, the interview lines and study checks under each section | Two evenings |
+| Build A3's identity layer | Section 12 micro-task ladder, M01–M28 | Each micro-task sits under the concept it proves | One command at a time |
+| Build the standard scenarios | Section 16, five passes, S01–S26 | Coverage table maps each to sections and golden answers | An afternoon each |
+| Pass the panel | Sections 5, 6, 8, 10 cold | Section 15 question bank, then the six golden answers aloud | The week before |
+
+### Contents
+
+| # | Section | One line |
+|---|---|---|
+| 1 | Who is calling | The Entra object chain: what holds a credential, what holds an assignment |
+| 2 | What the token says | Access, ID and refresh tokens; the claims; the validation order |
+| 3 | Grants and consent | Which grant for which agent situation; delegated vs application; consent in a bank |
+| 4 | Keyless Azure from Python | Credential classes, the chain, scope strings, the three execution contexts |
+| 5 | The agent's own identity | Entra Agent ID, what Foundry provisions, the token exchange, six connection types |
+| 6 | Least privilege on the data planes | Role names, the A3 matrix, the denied run, permission-aware retrieval |
+| 7 | Delegation | On-behalf-of and the audience rule |
+| 8 | Entra as authorisation server | The MCP spec in Entra terms, granting tools, APIM, error shapes |
+| 9 | Signing the user in | OIDC and SAML, and why neither is a tool token |
+| 10 | Zero Trust | The planes with one Azure control each, the A3 component table, threats |
+| 11 | Diagnose failures | Symptoms, first checks, shortcuts to refuse |
+| 12 | Exercises and evidence | The micro-task ladder M01–M28 and the learner exercises |
+| 13 | Job-market map | What the adverts name and where it is taught |
+| 14 | Adjacent topics | Conditional Access, logs, Okta, External ID, AKS, certificates, Copilot Studio |
+| 15 | Question bank | Forty questions panels ask, with the Azure answer points |
+| 16 | Scenarios | Twenty-six small projects that cover the subject |
+| | End matter | One request end to end, twelve lines, what this is not, versions, reading |
+
 ### What we are trying to avoid
 
 - The agent calls `issue_refund` with the project's shared managed identity; the audit log says "the project" and nobody can name the agent or the person behind the request.
@@ -22,11 +55,11 @@ An authenticated agent is not authorised to read a customer's ticket or issue a 
 
 ### What the chapter covers
 
-The Entra object chain and what a token says (1–2); grants and consent (3); keyless Python and the three execution contexts (4); the agent's own identity in Foundry (5); least privilege on the data planes and the denied-access run (6); delegation and the OBO audience rule (7); Entra as authorisation server for the ticket MCP server (8); OIDC and SAML for sign-in (9); the Zero Trust planes as one table (10); diagnosis (11); exercises, evidence and the job-market map (12–13); the adjacent topics a panel may raise, from Conditional Access on workload identities to External ID and AKS Workload ID (14); a bank of the questions panels actually ask, with the Azure answer points for each (15).
+The Entra object chain and what a token says (1–2); grants and consent (3); keyless Python and the three execution contexts (4); the agent's own identity in Foundry (5); least privilege on the data planes and the denied-access run (6); delegation and the OBO audience rule (7); Entra as authorisation server for the ticket MCP server (8); OIDC and SAML for sign-in (9); the Zero Trust planes as one table (10); diagnosis (11); exercises, evidence and the job-market map (12–13); the adjacent topics a panel may raise, from Conditional Access on workload identities to External ID and AKS Workload ID (14); a bank of the questions panels actually ask, with the Azure answer points for each (15); twenty-six standalone scenarios that cover the subject (16).
 
 ### What you have at the end
 
-Four diagrams you can redraw blind, a role-name table, a least-privilege matrix for A3, six golden answers in skeleton, and twenty-eight micro-tasks that build the A3 identity layer one command at a time. The runs, not the prose, are the evidence.
+Four diagrams you can redraw blind, a role-name table, a least-privilege matrix for A3, six golden answers in skeleton, twenty-eight micro-tasks that build the A3 identity layer one command at a time (Section 12), and twenty-six standalone scenarios in plain domains that cover every section, golden answer and micro-task (Section 16). The runs, not the prose, are the evidence.
 
 ### How the micro-tasks work
 
@@ -718,6 +751,10 @@ Entra error codes worth recognising on sight (codes from general knowledge, veri
 
 ## 12. Exercises and evidence
 
+### Two ladders
+
+The micro-tasks below build one system, A3, command by command. Section 16 is the other route: twenty-six small projects in plain domains, each an afternoon, each ending in one permitted and one denied run. Do the micro-tasks when you are building A3; do the scenarios when you want the standard patterns a panel recognises on sight. The five scenarios to have built before any screen: S01, S07, S09, S12, S13.
+
 ### The micro-task ladder
 
 Do them in this order; each row names what it needs. **EC** is the eyes-closed reproduction time once done. Tick a row only with its proof line in the study log.
@@ -966,6 +1003,110 @@ Practitioner writing that shows what clients argue about, not interview transcri
 ### Sources for the bank
 
 Project catalogue `ai_interview_questions.md` (U053, U098, U105); [Cloud Soft Solutions: AI security](https://cloudsoftsol.com/blog/ai-security-interview-questions), [enterprise AI](https://cloudsoftsol.com/blog/enterprise-ai-interview-questions/), [Azure AI](https://cloudsoftsol.com/blog/azure-ai-interview-questions-answers/) and [MCP](https://cloudsoftsol.com/blog/mcp-interview-questions) banks; [Okta agentic AI engineer guide](https://dataford.io/interview-guides/okta/agentic-ai-engineer); [PracHub AI security questions](https://prachub.com/resources/ai-security-interview-questions-prompt-injection-data-leakage-model-abuse-and-guardrails); [Security Scientist GenAI access control](https://www.securityscientist.net/blog/12-questions-and-answers-about-genai-access-control/). All read 30 October 2026. These are preparation sites, not transcripts of real loops; treat the wording as representative and the Azure answers above as yours to defend.
+
+## 16. Scenarios: small projects that cover the subject
+
+Twenty-six standalone projects in plain domains, none of them the ticket example. Each is an afternoon or less, ends with one permitted and one denied run, and teaches one pattern a Microsoft Foundry identity panel expects you to have built. Together they cover every section of the chapter, every golden answer and every micro-task. Build them in the order of the ladder at the end; log each in the section study log with date, assistance, the two runs and the gap. **Status: proposed, none built.** CLI flags and preview surfaces are from general knowledge; `--help` before each command.
+
+Shape of every entry: *Build* (what exists at the end), *Teaches* (the pattern and the words), *Proof* (the two runs), *Chapter* (sections, golden answers G1–G6, micro-tasks).
+
+### A. Identities without users
+
+**S01 · Weather bot with its own identity.** *Build:* a Foundry agent calling a weather API on Container Apps; the API is an app registration exposing one app role `Weather.Read`; the agent identity holds it, a second agent does not. *Teaches:* agent identity, app roles, `roles` claim, audience validation, one audit line per agent. *Proof:* second agent `403`; server log shows each agent's `oid`. *Chapter:* 1, 2, 5, 8; G3; M01, M02, M08, M11–M14.
+
+**S02 · Nightly indexer.** *Build:* a timer Function with a user-assigned managed identity reading a Blob container and writing an AI Search index; keys disabled on both. *Teaches:* managed identity, `Storage Blob Data Reader`, `Search Index Data Contributor`, indexer vs query principal. *Proof:* remove the Search role, `403`; restore, `200`. *Chapter:* 4, 6; G2; M03, M18–M20.
+
+**S03 · Deploy pipeline without secrets.** *Build:* GitHub Actions deploying S01's API through `azure/login` on a federated credential scoped to `environment:prod`. *Teaches:* workload identity federation, subject strings, deployment vs runtime identity. *Proof:* fork PR fails at token exchange; prod run succeeds with no secret in the repo. *Chapter:* 1, 4; G2; M04.
+
+**S04 · Keyless model call.** *Build:* a 60-line client calling Azure OpenAI with `get_bearer_token_provider`, run once as you (CLI) and once as a managed identity in a Container App; `disableLocalAuth` on the resource. *Teaches:* credential classes, scope strings, `Cognitive Services OpenAI User`, why keys off is an RBAC statement. *Proof:* key call `401`; token call `200`; the log names which credential was used. *Chapter:* 4, 6; G2; M09, M10.
+
+**S05 · Pin the chain.** *Build:* the same client with `DefaultAzureCredential`, then with `AZURE_TOKEN_CREDENTIALS=prod` and `require_envvar=True`, with `azure.identity` debug logging. *Teaches:* chain order, non-determinism, the production verdict. *Proof:* two log excerpts, one credential attempted vs several. *Chapter:* 4; M09.
+
+**S06 · Read the token.** *Build:* a script that acquires tokens for three resources as three principals (you, a managed identity, an agent identity from a trace) and annotates every claim without validating. *Teaches:* `aud`, `iss`, `tid`, `oid`, `azp`, `scp` vs `roles`, `ver`, access vs ID token. *Proof:* a three-column claim table; the sentence on why the Graph token is a `401` elsewhere. *Chapter:* 2; M05.
+
+### B. Users and their entitlements
+
+**S07 · Expense assistant acting as the user.** *Build:* a web app (auth code + PKCE) where an employee asks for their own claims; the expenses API calls Graph for the user's manager via OBO; two users. *Teaches:* delegated scopes, OBO, the audience rule, consent. *Proof:* user A never sees user B; a Graph-audience token presented to the API is rejected with the AADSTS text. *Chapter:* 3, 7, 9; G1; M06, M21.
+
+**S08 · Admin-consent workflow.** *Build:* a tenant with user consent disabled; the S07 client requests a new scope; an admin approves through the admin-consent workflow; the grant record is read back. *Teaches:* delegated vs application permissions, `.default`, consent in a regulated tenant, "a configured permission is not a grant". *Proof:* the consent request, the grant record, the `AADSTS65001` before approval. *Chapter:* 3; G3; M06.
+
+**S09 · HR policy Q&A with document permissions.** *Build:* ten documents, three groups, one retrieval identity, filters from validated group claims, per-user cache. *Teaches:* shared retrieval identity vs user entitlements, security filters or document-level ACLs, cache partition, stale membership. *Proof:* two-user eval table with zero leaks; move a user between groups and time the change. *Chapter:* 6; G2; M18.
+
+**S10 · Sign-in two ways.** *Build:* one intranet page that signs in with OIDC against your app registration, and the same page behind an Entra enterprise application configured for SAML SSO (a gallery test app or a SAML test SP). *Teaches:* OIDC vs SAML, ID token vs assertion, SP vs service principal, why neither is a tool token. *Proof:* both sign-ins; an attempt to send the ID token to S01's API returns `401`. *Chapter:* 9; G1.
+
+**S11 · CLI sign-in for a headless box.** *Build:* a small admin script using the device-code grant to run `az`-equivalent calls from a VM with no browser. *Teaches:* device code, where it is right and where it is a smell. *Proof:* the flow works; the same script in a daemon is refactored to managed identity and the diff is the lesson. *Chapter:* 3.
+
+### C. The Foundry core
+
+**S12 · Calculator MCP server behind Entra.** *Build:* a FastMCP server with `add` and `divide`, scopes `calc.basic` and `calc.advanced`, protected-resource metadata, JWKS validation, `401` with `WWW-Authenticate`, `403 insufficient_scope`. *Teaches:* the MCP authorisation spec in Entra terms, scope-to-tool mapping in code, no passthrough. *Proof:* wrong-audience `401`; basic-scope caller invoking `divide` `403`. *Chapter:* 2, 8; G3; M22.
+
+**S13 · Three agents, one project.** *Build:* greeter, lookup and writer agents sharing S12 first through a project-managed-identity connection, then through agent-identity connections with one app role each. *Teaches:* shared vs per-agent identity, the audit argument, connection auth types. *Proof:* one `oid` for all three, then three `oid`s with only the writer permitted to write. *Chapter:* 5; G3, G4; M12–M15.
+
+**S14 · Publish and re-grant.** *Build:* publish S13's writer agent; diff its identity and role assignments before and after; script the re-grant. *Teaches:* prototype to production, migration drops assignments, what to automate before publishing. *Proof:* before/after IDs and assignment lists. *Chapter:* 5; G4; M17.
+
+**S15 · Third-party tool with passthrough consent.** *Build:* a Foundry agent connected to a public MCP server with its own IdP through OAuth identity passthrough. *Teaches:* `oauth_consent_request`, per-user consent, Microsoft tokens refused for untrusted endpoints. *Proof:* the consent item, a successful second call, a declined consent producing a tool error. *Chapter:* 5; M16.
+
+**S16 · Same server behind APIM.** *Build:* APIM in front of S12 with `validate-azure-ad-token`, `rate-limit-by-key` on `oid`, managed-identity auth to the backend, backend private. *Teaches:* gateway vs backend responsibilities, bypass prevention, per-caller fairness. *Proof:* APIM trace of an accepted and a rejected call; the backend still validates when reached directly from the VNet. *Chapter:* 8, 10; G2; M23.
+
+**S17 · Approval gate on a consequential tool.** *Build:* a "send announcement" tool behind `require_approval`; requester and approver are different users; approval bound to the message hash, ten-minute expiry. *Teaches:* approval is not authorisation, binding to the exact action, expiry, replay, approval fatigue. *Proof:* self-approval denied, expired approval denied, changed message invalidates approval. *Chapter:* 8, 15; G5.
+
+**S18 · Injection drill with a narrow token.** *Build:* a document-summary agent with read on a folder; plant a document that instructs it to post the folder's contents to a URL; run once with a broad identity and an open egress, once with a folder-scoped delegated token and a Firewall allow-list. *Teaches:* identity scope as blast radius, excessive agency, egress as a control, retrieved text is data. *Proof:* the first run's attempted call, the second run's `403` and blocked egress log line. *Chapter:* 10, 15; G5.
+
+### D. The estate
+
+**S19 · Secret that cannot be eliminated.** *Build:* a tool calling a vendor API that only accepts a static key; key in Key Vault, `Key Vault Secrets User` on that one secret for the tool's identity; rotation with overlap through a second version. *Teaches:* Key Vault RBAC, rotation sequence, "vault access is not authorisation". *Proof:* read of a second secret `403`; rotation with no failed calls. *Chapter:* 10; G2; M24.
+
+**S20 · Private by default.** *Build:* S02's Search and Storage with public access disabled and private endpoints; the Function in the VNet; your laptop outside. *Teaches:* identity vs network controls, private DNS, the "indexer green but index empty" trap. *Proof:* same token, `200` inside, refused outside; the DNS answer. *Chapter:* 10; G2; M25.
+
+**S21 · Block the agent by location.** *Build:* S01's agent identity under a Conditional Access policy, block outside a named location, report-only first. *Teaches:* what CA can and cannot do for non-human identities, Workload Identities Premium, the service-principal sign-in log. *Proof:* the blocked sign-in entry. *Chapter:* 14; M26.
+
+**S22 · Administrators under PIM, identities under review.** *Build:* the role that grants `Refunds`-class app roles made eligible rather than active through PIM; an access review on S13's agent identities. *Teaches:* privileged administration, time-bound activation, access reviews as the drift control, sponsor on each identity. *Proof:* a denied assignment without activation; the review record with one assignment removed. *Chapter:* 5, 10, 14; G6.
+
+**S23 · Agent runtime on AKS.** *Build:* S01's agent logic as a pod with Workload ID: OIDC issuer, service-account annotation, pod label, federated credential on a user-assigned identity, `WorkloadIdentityCredential`. *Teaches:* one service account per agent, `AZURE_FEDERATED_TOKEN_FILE`, subject strings. *Proof:* a token; delete the federated credential, restart, failure on the subject. *Chapter:* 14; M28.
+
+**S24 · Certificate instead of secret.** *Build:* S07's expenses API authenticating to Entra for OBO with a Key Vault certificate instead of a client secret; rotation by overlap. *Teaches:* `client_assertion`, certificate credentials, why the secret count can reach one. *Proof:* OBO works with the certificate; the old secret deleted; a call with it fails. *Chapter:* 14; G2; M21.
+
+**S25 · Customer-facing FAQ bot.** *Build:* a public FAQ assistant where customers sign in with email OTP in an External ID tenant; the bot's tools run under workforce-tenant identities. *Teaches:* two tenants, two issuers, customer identity as a claim rather than a delegated token. *Proof:* a customer token rejected by the workforce-tenant API; a customer's own records returned only to them. *Chapter:* 14.
+
+**S26 · Reconstruct an action.** *Build:* any scenario above with one correlation ID from sign-in to backend receipt, Entra and application logs routed to Log Analytics, and three saved KQL queries: who did what as whom approved by whom for a given ID; tokens issued to an agent identity by resource; role or app-role assignment writes by any agent identity (expected empty). *Teaches:* audit trail vs observability, what the record carries, provenance, privilege self-escalation check. *Proof:* the query result for one action; a search for any bearer token in the logs returning nothing. *Chapter:* 10, 14, 15; G5, G6; M27.
+
+### Coverage
+
+| Chapter section | Scenarios |
+|---|---|
+| 1 Object chain | S01, S03, S06 |
+| 2 Token | S06, S12 |
+| 3 Grants and consent | S07, S08, S11 |
+| 4 Keyless Python | S02, S04, S05 |
+| 5 Agent ID in Foundry | S01, S13, S14, S15, S22 |
+| 6 Data planes and retrieval | S02, S04, S09 |
+| 7 OBO | S07, S24 |
+| 8 Entra as AS for MCP | S12, S16, S17 |
+| 9 OIDC and SAML | S07, S10 |
+| 10 Zero Trust | S16, S18, S19, S20, S26 |
+| 14 Adjacent | S21, S22, S23, S24, S25, S26 |
+| 15 Question bank | S17, S18, S26 and every denied run above |
+
+| Golden answer | Scenarios that give you the example |
+|---|---|
+| G1 OIDC or SAML | S07, S10 |
+| G2 No keys, no public endpoints | S02, S03, S04, S16, S19, S20, S24 |
+| G3 Whose identity calls the tool | S01, S08, S12, S13 |
+| G4 Stop every agent sharing one identity | S13, S14 |
+| G5 What the audit log shows | S17, S18, S26 |
+| G6 Govern forty agents | S22, S26 |
+
+### Ladder
+
+Five passes, each one or two sittings. Do not start a pass until the previous pass has its denied runs logged.
+
+1. **Identities without users:** S01, S02, S03, S04, S05, S06. You can now say the object chain, the token, the credential classes and the role names with runs behind them.
+2. **Users and entitlements:** S07, S08, S09, S10, S11. Delegation, consent and the retrieval argument.
+3. **The Foundry core:** S12, S13, S14, S15, S16, S17, S18. This pass is the interview credit; S12, S13 and S16 are the three a Foundry panel assumes you have built.
+4. **The estate:** S19, S20, S21, S22, S23, S24, S25 as the tenant and licences allow; S21 and S23 may need a sandbox tenant.
+5. **Evidence:** S26 over whichever scenarios are live, then the six golden answers recorded with these runs as the examples.
+
+The five scenarios to have built before any screen: S01, S07, S09, S12, S13.
 
 ## One request, end to end
 
