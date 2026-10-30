@@ -1,0 +1,8 @@
+{
+  "display_name": "ticket-agent",
+  "description": "G05 lab 01: ticket-agent redeployed with tracing on",
+  "identity_type": "AGENT_IDENTITY",
+  "env_vars": {
+    "GOOGLE_GENAI_USE_VERTEXAI": "TRUE"
+  }
+}

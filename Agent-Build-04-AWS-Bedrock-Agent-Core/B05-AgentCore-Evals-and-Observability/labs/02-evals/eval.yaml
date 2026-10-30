@@ -1,0 +1,21 @@
+# Declarative spec of the online evaluation config (the post-release gate), consumed by 02_online_eval_config.py.
+# The AgentCore CLI 1.0 has an `agentcore eval` command group; its YAML format was not verified on 2026-10-25,
+# so this file is the lab's own spec, not a CLI input. Keep evaluator names identical to 06_strands_evals_ci.py.
+name: ticket-agent-online
+agent: ${TICKET_AGENT_RUNTIME_ARN}
+log_group: /aws/bedrock-agentcore/runtimes/${AGENT_ID}-DEFAULT
+sampling_percentage: 10
+session_timeout_minutes: 15
+evaluators:
+  - id: Builtin.GoalSuccessRate
+    alarm_below: 0.8
+  - id: Builtin.ToolSelectionAccuracy
+    alarm_below: 0.9
+  - id: Builtin.ToolParameterAccuracy
+    alarm_below: 0.9
+  - id: Builtin.Correctness
+  - id: Builtin.Helpfulness
+  - id: Builtin.Refusal
+    alarm_above: 0.3          # refusals should be rare except for the policy cases
+result_destination: DEDICATED_LOG_GROUP
+metrics_namespace: Bedrock-AgentCore/Evaluations

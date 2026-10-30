@@ -1,0 +1,19 @@
+{
+  "displayName": "ticket-agent p99 latency > 5000 ms",
+  "combiner": "OR",
+  "conditions": [
+    {
+      "displayName": "p99 request_latencies",
+      "conditionThreshold": {
+        "filter": "metric.type=\"aiplatform.googleapis.com/reasoning_engine/request_latencies\" AND resource.type=\"aiplatform.googleapis.com/ReasoningEngine\"",
+        "aggregations": [
+          {"alignmentPeriod": "300s", "perSeriesAligner": "ALIGN_PERCENTILE_99"}
+        ],
+        "comparison": "COMPARISON_GT",
+        "thresholdValue": 5000,
+        "duration": "300s"
+      }
+    }
+  ],
+  "_note": "Threshold from map E5 (page example). Metric path prefix and field names are standard Cloud Monitoring, unverified against the map. TODO(learner): add notificationChannels."
+}

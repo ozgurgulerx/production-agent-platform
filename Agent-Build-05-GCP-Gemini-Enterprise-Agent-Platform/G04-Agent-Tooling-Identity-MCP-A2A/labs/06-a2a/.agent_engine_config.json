@@ -1,0 +1,7 @@
+{
+  "identity_type": "AGENT_IDENTITY",
+  "display_name": "ticket-agent",
+  "description": "G04 lab 06: ticket-agent with a RemoteA2aAgent sub-agent (map C5, C7)",
+  "min_instances": 0,
+  "max_instances": 1
+}

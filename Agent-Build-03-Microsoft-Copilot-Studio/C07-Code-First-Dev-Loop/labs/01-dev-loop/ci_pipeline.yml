@@ -1,0 +1,57 @@
+# GitHub Actions: pack the YAML without a login, import under a federated credential, gate on the C05 evaluation run.
+# Copy to .github/workflows/ in the repository that holds ticket-agent/. No client secrets anywhere.
+# verify: pac flag names (reading map C1, 2026-07-10); a third-party report says a one-time portal step may be needed
+#         before pipeline exports/imports work in a new environment; not on Learn.
+name: ticket-agent-promote
+on:
+  push:
+    branches: [main]
+    paths: ["ticket-agent/**", "evaluation/**"]
+permissions:
+  id-token: write        # OIDC for the federated credential
+  contents: read
+env:
+  ENVIRONMENT_ID: ${{ vars.TEST_ENVIRONMENT_ID }}
+  ENVIRONMENT_URL: ${{ vars.TEST_ENVIRONMENT_URL }}
+  TENANT_ID: ${{ vars.TENANT_ID }}
+  CLIENT_ID: ${{ vars.PIPELINE_CLIENT_ID }}      # service principal with a federated credential for this repo/branch
+jobs:
+  pack:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with: { dotnet-version: "8.0.x" }
+      - run: dotnet tool install --global Microsoft.PowerApps.CLI.Tool
+      - run: pac copilot pack --path ./ticket-agent --outputFile ./out/ticket-agent.zip     # no auth needed (C1)
+      - uses: actions/upload-artifact@v4
+        with: { name: solution, path: ./out/ticket-agent.zip }
+  import-and-evaluate:
+    needs: pack
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with: { name: solution, path: ./out }
+      - uses: actions/setup-dotnet@v4
+        with: { dotnet-version: "8.0.x" }
+      - run: dotnet tool install --global Microsoft.PowerApps.CLI.Tool
+      - name: pac auth with federated credential (OIDC), no secret
+        run: |
+          pac auth create --tenant "$TENANT_ID" --applicationId "$CLIENT_ID" --githubFederated \
+            --environment "$ENVIRONMENT_ID"                                                       # verify: flag set on your pac version
+      - run: pac solution import --path ./out/ticket-agent.zip --environment "$ENVIRONMENT_ID" --publish-changes   # verify
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.13" }
+      - name: evaluation gate (C05 lab 01, evaluation REST API, I3)
+        env:
+          POWER_PLATFORM_API: https://api.powerplatform.com
+          AGENT_ID: ${{ vars.TEST_AGENT_ID }}
+          TESTSET_ID: ${{ vars.TESTSET_ID }}
+          PASS_RATE_MIN: "0.9"
+        run: |
+          pip install -q -r Agent-Build-03-Microsoft-Copilot-Studio/labs-setup/requirements.txt
+          # the C05 script authenticates with azure-identity; in CI it picks up the OIDC federated token via AzurePipelines/GitHub provider
+          python Agent-Build-03-Microsoft-Copilot-Studio/C05-Evaluation-Observability-and-Safety/labs/01-evaluation/run_and_poll.py --ci
+      - name: publish only if the gate passed
+        run: pac copilot publish --schemaName "${{ vars.AGENT_SCHEMA_NAME }}"                       # verify

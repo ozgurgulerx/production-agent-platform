@@ -1,0 +1,39 @@
+# Gate a pull request on the Copilot Studio evaluation run. No secrets: GitHub OIDC → federated credential on the
+# app registration (CLIENT_ID) → token for https://api.powerplatform.com/.default. The federated credential subject is
+# repo:<org>/<repo>:environment:test. run_and_poll.py exits 1 under the threshold.
+name: copilot-studio-eval-gate
+on:
+  pull_request:
+    paths: ["agents/ticket-agent/**"]        # the YAML cloned by pac copilot / VS Code (C03 lab 01)
+permissions:
+  id-token: write
+  contents: read
+jobs:
+  evaluate:
+    runs-on: ubuntu-latest
+    environment: test
+    env:
+      TENANT_ID: ${{ vars.TENANT_ID }}
+      CLIENT_ID: ${{ vars.CLIENT_ID }}
+      ENVIRONMENT_ID: ${{ vars.ENVIRONMENT_ID }}
+      AGENT_ID: ${{ vars.AGENT_ID }}
+      TESTSET_ID: ${{ vars.TESTSET_ID }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.13" }
+      - run: pip install msal httpx python-dotenv
+      - name: Token via OIDC federated credential
+        run: |
+          IDTOKEN=$(curl -sH "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
+            "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=api://AzureADTokenExchange" | jq -r .value)
+          TOKEN=$(curl -s -X POST "https://login.microsoftonline.com/$TENANT_ID/oauth2/v2.0/token" \
+            -d client_id=$CLIENT_ID -d scope=https://api.powerplatform.com/.default \
+            -d client_assertion_type=urn:ietf:params:oauth:client-assertion-type:jwt-bearer \
+            -d client_assertion=$IDTOKEN -d grant_type=client_credentials | jq -r .access_token)
+          echo "PP_TOKEN=$TOKEN" >> $GITHUB_ENV
+      # run_and_poll.py uses device code by default; in CI export PP_TOKEN and patch device_code_token to return it
+      # (verify: an application permission for the evaluation API must exist for client_credentials; the Learn page
+      # shows delegated use. If only delegated is supported, run this job on a self-hosted runner with a cached
+      # user token or use the connector action on a schedule instead.)
+      - run: python C05-Evaluation-Observability-and-Safety/labs/01-evaluation/run_and_poll.py --threshold 0.8

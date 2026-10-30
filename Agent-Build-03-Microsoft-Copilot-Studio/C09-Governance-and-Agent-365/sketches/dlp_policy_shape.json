@@ -1,0 +1,38 @@
+{
+  "_comment": "Shape of a Power Platform DLP policy for the ticket agent's lab environment. Business group: the ticket custom connector and the MCP connector it rides on; Blocked: the HTTP virtual connector except an APIM allow-list and 'Chat without Microsoft Entra ID authentication'. Admin API: PUT https://api.bap.microsoft.com/providers/PowerPlatform.Governance/v2/policies/{policyId}?api-version=2016-11-01 (# verify path and version against the DLP admin API page, F1). Shape derived from PowerShell New-DlpPolicy output; field names marked verify.",
+  "displayName": "ticket-agent-lab-policy",
+  "defaultConnectorsClassification": "General",
+  "environmentType": "OnlyEnvironments",
+  "environments": [
+    { "id": "/providers/Microsoft.BusinessAppPlatform/scopes/admin/environments/<ENVIRONMENT_ID>", "name": "<ENVIRONMENT_ID>", "type": "Microsoft.BusinessAppPlatform/scopes/environments" }
+  ],
+  "connectorGroups": [
+    {
+      "classification": "Confidential",
+      "connectors": [
+        { "id": "/providers/Microsoft.PowerApps/apis/shared_tickets-5fcustom", "name": "Tickets (custom connector)", "type": "Microsoft.PowerApps/apis" },
+        { "id": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps", "name": "Microsoft Dataverse", "type": "Microsoft.PowerApps/apis" },
+        { "id": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline", "name": "SharePoint", "type": "Microsoft.PowerApps/apis" }
+      ]
+    },
+    {
+      "classification": "Blocked",
+      "connectors": [
+        { "id": "/providers/Microsoft.PowerApps/apis/shared_pvabotsnoauth", "name": "Chat without Microsoft Entra ID authentication in Copilot Studio", "type": "Microsoft.PowerApps/apis" },
+        { "id": "/providers/Microsoft.PowerApps/apis/shared_whatsapp-5fchannel", "name": "WhatsApp channel (virtual connector)", "type": "Microsoft.PowerApps/apis", "_verify": "virtual connector ids are not listed on F1; take them from Get-DlpPolicy output" }
+      ]
+    }
+  ],
+  "connectorConfigurations": {
+    "endpointConfigurations": [
+      {
+        "connectorId": "/providers/Microsoft.PowerApps/apis/shared_webcontents",
+        "_comment": "HTTP virtual connector: allow only the APIM host that fronts the ticket MCP/REST API, deny everything else (endpoint filtering, F1)",
+        "endpointRules": [
+          { "order": 1, "behavior": "Allow", "endpoint": "https://<apim-name>.azure-api.net/*" },
+          { "order": 2, "behavior": "Deny", "endpoint": "*" }
+        ]
+      }
+    ]
+  }
+}

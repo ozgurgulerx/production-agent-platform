@@ -1,0 +1,18 @@
+# Pinned on 2026-10-25 against Python 3.13 (map "Pinned versions"). Regenerate with: .venv/bin/pip freeze | grep -E '^(google-|toolbox|litellm|python-dotenv|a2a)'.
+# NOTE: adk deploy writes google-cloud-aiplatform>=2.2,<3 and needs google-cloud-agentplatform>=2.2 (map C2).
+google-adk[a2a,gcp,eval,mcp]==2.13.0
+google-cloud-agentplatform==2.6.0
+google-cloud-aiplatform[agent_engines,adk]==2.6.0
+google-genai==2.33.0
+google-cloud-logging
+google-cloud-trace
+google-cloud-secret-manager
+google-cloud-discoveryengine
+toolbox-core
+python-dotenv==1.2.4
+pytest
+ipykernel
+nbformat
+nbconvert
+litellm>=1.84            # G07 only; see map H8 advisory on 1.82.7/1.82.8
+pytest-asyncio

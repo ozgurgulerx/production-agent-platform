@@ -1,0 +1,23 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "DenyModelsOutsideAllowlist",
+      "Effect": "Deny",
+      "Action": ["bedrock:InvokeModel", "bedrock:InvokeModelWithResponseStream", "bedrock:Converse", "bedrock:ConverseStream"],
+      "NotResource": [
+        "arn:aws:bedrock:*::foundation-model/anthropic.claude-haiku-5-5*",
+        "arn:aws:bedrock:*::foundation-model/anthropic.claude-sonnet-5-5*",
+        "arn:aws:bedrock:*::foundation-model/amazon.nova-2-lite-v1:0",
+        "arn:aws:bedrock:*:*:inference-profile/global.anthropic.claude-*"
+      ]
+    },
+    {
+      "Sid": "DenyOutsideApprovedRegions",
+      "Effect": "Deny",
+      "Action": ["bedrock:*", "bedrock-agentcore:*"],
+      "Resource": "*",
+      "Condition": {"StringNotEquals": {"aws:RequestedRegion": ["us-east-1", "us-west-2", "eu-west-2"]}}
+    }
+  ]
+}

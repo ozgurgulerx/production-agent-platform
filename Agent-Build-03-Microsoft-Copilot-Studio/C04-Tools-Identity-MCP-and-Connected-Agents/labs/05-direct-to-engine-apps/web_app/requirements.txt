@@ -1,0 +1,6 @@
+fastapi
+uvicorn
+msal==1.39.0
+microsoft-agents-copilotstudio-client==1.9.0
+python-dotenv
+httpx

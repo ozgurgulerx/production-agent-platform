@@ -1,0 +1,27 @@
+# What `agentcore add harness` writes for the ticket harness (AgentCore CLI 1.0, Oct 2026).
+# Field names follow the CreateHarness API (bedrock-agentcore-control, boto3 1.43.118); the CLI's
+# YAML keys were not fetched on 25 Oct 2026, so treat the key spelling as `# verify` and the
+# API-side meaning as confirmed.
+name: ticket_agent_harness
+model:
+  bedrockModelConfig:
+    modelId: global.anthropic.claude-haiku-5-5
+    maxTokens: 600
+systemPrompt:
+  - text: >
+      You are the support-ticket assistant for a UK bank's card team. Answer briefly.
+      Use the tools for ticket facts; never invent a ticket. Refunds above 250 GBP need a human.
+tools:
+  - type: inline_function          # return-of-control: the harness emits toolUse, the caller answers with toolResult
+    name: get_ticket
+    config:
+      inlineFunction:
+        description: Return one support ticket by id
+        inputSchema: {json: {type: object, properties: {ticket_id: {type: string}}, required: [ticket_id]}}
+  - type: agentcore_gateway        # the governed alternative: tools run behind a Gateway (B04 lab 03)
+    name: ticket_gateway
+    config:
+      agentCoreGateway:
+        gatewayArn: arn:aws:bedrock-agentcore:us-east-1:123456789012:gateway/REPLACE
+skills: []                         # SKILL.md folders from path/, s3/, git/ or awsSkills
+maxIterations: 8

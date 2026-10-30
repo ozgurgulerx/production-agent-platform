@@ -1,0 +1,37 @@
+{
+  "swagger": "2.0",
+  "info": {"title": "Ticket API", "version": "1.0", "description": "UK support tickets for the Copilot Studio REST tool lab (OpenAPI v2 as the tool requires)."},
+  "host": "ticket-api.<region>.azurecontainerapps.io",
+  "basePath": "/",
+  "schemes": ["https"],
+  "produces": ["application/json"],
+  "securityDefinitions": {"api_key": {"type": "apiKey", "in": "header", "name": "X-API-Key"}},
+  "security": [{"api_key": []}],
+  "paths": {
+    "/tickets": {
+      "get": {"operationId": "ListTickets", "summary": "List tickets by status",
+              "parameters": [{"name": "status", "in": "query", "type": "string", "default": "open", "enum": ["open", "closed"]}],
+              "responses": {"200": {"description": "tickets", "schema": {"type": "array", "items": {"$ref": "#/definitions/Ticket"}}}}}
+    },
+    "/tickets/{ticket_id}": {
+      "get": {"operationId": "GetTicket", "summary": "Get one ticket",
+              "parameters": [{"name": "ticket_id", "in": "path", "required": true, "type": "string"}],
+              "responses": {"200": {"description": "ticket", "schema": {"$ref": "#/definitions/Ticket"}}, "404": {"description": "not found"}}}
+    },
+    "/policies/{name}": {
+      "get": {"operationId": "GetPolicy", "summary": "Get a policy text",
+              "parameters": [{"name": "name", "in": "path", "required": true, "type": "string"}],
+              "responses": {"200": {"description": "policy", "schema": {"type": "object", "properties": {"name": {"type": "string"}, "text": {"type": "string"}}}}}}
+    },
+    "/tickets/{ticket_id}/refund": {
+      "post": {"operationId": "IssueRefund", "summary": "Refund an amount in GBP against a ticket; ESCALATE above 250",
+               "parameters": [{"name": "ticket_id", "in": "path", "required": true, "type": "string"},
+                              {"name": "body", "in": "body", "required": true, "schema": {"type": "object", "required": ["amount"],
+                               "properties": {"amount": {"type": "number"}, "reason": {"type": "string"}}}}],
+               "responses": {"200": {"description": "result", "schema": {"type": "object", "properties": {"result": {"type": "string"}, "why": {"type": "string"}}}}}}
+    }
+  },
+  "definitions": {
+    "Ticket": {"type": "object", "properties": {"id": {"type": "string"}, "customer": {"type": "string"}, "status": {"type": "string"}, "issue": {"type": "string"}, "card_team": {"type": "string"}}}
+  }
+}

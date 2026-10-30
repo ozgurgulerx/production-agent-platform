@@ -1,0 +1,33 @@
+openapi: 3.0.3
+info: { title: Tickets API, version: "1.0" }
+servers: [{ url: https://tickets.example.internal }]   # replace with a real base URL before adding the target
+paths:
+  /tickets/{ticket_id}:
+    get:
+      operationId: get_ticket_api
+      summary: Return one support ticket by id
+      parameters: [{ name: ticket_id, in: path, required: true, schema: { type: string } }]
+      responses: { "200": { description: ticket } }
+  /tickets:
+    get:
+      operationId: list_tickets_api
+      summary: List tickets by status
+      parameters: [{ name: status, in: query, schema: { type: string, enum: [open, closed] } }]
+      responses: { "200": { description: tickets } }
+  /refunds:
+    post:
+      operationId: issue_refund_api
+      summary: Refund an amount in GBP against a ticket; above 250 is escalated
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [ticket_id, amount]
+              properties: { ticket_id: { type: string }, amount: { type: number }, reason: { type: string } }
+      responses: { "200": { description: result } }
+components:
+  securitySchemes:
+    ApiKeyAuth: { type: apiKey, in: header, name: x-api-key }
+security: [{ ApiKeyAuth: [] }]

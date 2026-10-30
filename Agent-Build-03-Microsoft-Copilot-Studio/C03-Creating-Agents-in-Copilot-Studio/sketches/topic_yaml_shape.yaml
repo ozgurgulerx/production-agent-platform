@@ -1,0 +1,40 @@
+# One Standard-harness topic in the Copilot Studio YAML dialect (portal "Code view"; cloned by pac / VS Code, C1, C2).
+# Node kinds below follow the public YAML format as of 2026; verify against a cloned topic before relying on key names.
+kind: AdaptiveDialog
+beginDialog:
+  kind: OnRecognizedIntent
+  id: main
+  intent:
+    displayName: Refund over limit
+    triggerQueries:
+      - refund more than 250
+      - large refund
+      - refund 400 pounds
+  actions:
+    - kind: Question
+      id: askTicket
+      prompt: Which ticket is this about?
+      variable: Topic.TicketId
+      entity: StringPrebuiltEntity
+    - kind: InvokeConnectorAction            # verify: tool-call node kind for an MCP / connector tool
+      id: lookup
+      connectionReference: cr1ab_tickets_mcp
+      operationId: get_ticket
+      input:
+        ticket_id: =Topic.TicketId
+      output:
+        binding:
+          ticket: Topic.Ticket
+    - kind: ConditionGroup
+      id: cap
+      conditions:
+        - id: overCap
+          condition: =Topic.Ticket.amount_gbp > 250
+          actions:
+            - kind: SendActivity
+              id: refuse
+              activity: Refunds above 250 GBP need a human. I have flagged the ticket for the team.
+      elseActions:
+        - kind: SendActivity
+          id: ok
+          activity: =Concatenate("Refund of ", Text(Topic.Ticket.amount_gbp), " GBP can be issued.")

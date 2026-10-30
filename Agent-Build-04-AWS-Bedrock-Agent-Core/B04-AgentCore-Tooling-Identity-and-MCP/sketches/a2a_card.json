@@ -1,0 +1,30 @@
+{
+  "name": "refund-specialist",
+  "description": "Decides and executes refunds for UK card tickets within policy; escalates above £250.",
+  "url": "https://bedrock-agentcore.eu-west-2.amazonaws.com/runtimes/arn%3Aaws%3Abedrock-agentcore%3Aeu-west-2%3A123456789012%3Aruntime%2Frefund_specialist-abc123/invocations",
+  "version": "1.0.0",
+  "protocolVersion": "0.3.0",
+  "capabilities": { "streaming": true, "pushNotifications": false },
+  "defaultInputModes": ["text/plain"],
+  "defaultOutputModes": ["text/plain"],
+  "securitySchemes": {
+    "bearer": { "type": "http", "scheme": "bearer", "bearerFormat": "JWT" }
+  },
+  "security": [{ "bearer": [] }],
+  "skills": [
+    {
+      "id": "assess-refund",
+      "name": "Assess refund",
+      "description": "Reads the ticket and the refund policy, returns a decision with reason.",
+      "tags": ["refund", "policy"],
+      "examples": ["Should ticket 1042 be refunded?"]
+    },
+    {
+      "id": "issue-refund",
+      "name": "Issue refund",
+      "description": "Issues a refund up to £250; above that returns ESCALATE.",
+      "tags": ["refund"]
+    }
+  ],
+  "_note": "Served by the container at :9000/.well-known/agent-card.json; reached via <runtime invocations URL>/.well-known/agent-card.json or get_agent_card. Shape per a2a-sdk; verify field names against the installed a2a version."
+}

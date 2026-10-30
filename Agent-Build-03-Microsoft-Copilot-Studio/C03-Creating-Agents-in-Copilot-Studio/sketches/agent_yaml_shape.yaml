@@ -1,0 +1,35 @@
+# Shape of the tree `pac copilot clone` / the VS Code extension produce for a Standard-harness agent (C1, C2).
+# Key names are illustrative and marked verify: clone your own agent once and diff against this file.
+# agent/
+# ├── agent.yaml                 # this file: settings
+# ├── instructions.md            # the instruction block (verify: may be inline under `instructions:`)
+# ├── knowledge/                 # knowledge source references (uploaded files are NOT ALM-portable, C4)
+# ├── tools/                     # connector, MCP, REST and flow tool references
+# └── topics/                    # one YAML per topic (see topic_yaml_shape.yaml)
+kind: Agent                                   # verify
+schemaName: cr1ab_ticketAgent                 # Settings > Advanced > Metadata
+displayName: Ticket Agent
+description: UK card team support assistant
+harness: standard                             # verify: may not be surfaced as a key; harness is chosen at creation
+orchestration:
+  mode: generative                            # required for MCP tools and web search (B1)
+  primaryModel: gpt-chat-latest               # default; retirements on 12 Nov 2026 (K1)  # verify key
+authentication:
+  mode: authenticateWithMicrosoft             # none | authenticateWithMicrosoft | manual (E5)  # verify key
+moderation: high                              # Lowest..Highest, default High (F11)  # verify key
+instructions: !include instructions.md        # verify
+knowledge:
+  - type: sharepoint                          # connector-based, ALM-portable
+    siteUrl: https://contoso.sharepoint.com/sites/cardpolicies
+  - type: uploadedFiles                       # NOT ALM-portable (C4)
+    files: [refund-policy.md, card-policy.md, escalation-policy.md]
+tools:
+  - type: mcp                                 # D2, D3
+    name: tickets
+    connectionReference: cr1ab_tickets_mcp    # connector + connection reference in the solution
+    allowAll: false                           # per-tool toggles (D4)
+    allowedTools: [get_ticket, list_tickets, get_policy, issue_refund]
+    credentials: endUser                      # endUser | maker (D1)
+channels:
+  - teams
+  - demoWebsite

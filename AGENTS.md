@@ -22,7 +22,13 @@ Stages must remain self-contained, with their own dependencies, lockfile, fixtur
 
 For vendor-specific tasks, check `documentation/` for relevant local reference material. This folder is local and git-ignored.
 
+For questions about working with Microsoft Foundry, consult this repository first. Start with `documentation/INDEX.md` and search the local library using `python3 documentation/tools/library.py search "<terms>"` (optionally filter with `--product foundry`, `apim`, `search`, or `entra`). Include the related API Management, Azure AI Search, Entra ID, and Agent Framework references when relevant. Prefer current article copies over historical PDF extracts, and cite the relevant local section and official source URL.
+
+Then consult official web sources when required to verify current behavior, APIs, SDK versions, availability, or release changes, or when local coverage is missing, ambiguous, or conflicting. Check source dates and `documentation/REFRESH-REPORT.md`; a recent download date does not establish current release coverage. Do not treat uncertain historical comparisons as confirmed changes. This local-first guidance does not authorize automatic file changes or documentation refreshes; request-specific authorization rules still apply.
+
 Keep tests and verification to the minimum appropriate for the requested change. Do not add tests, run broad suites, or repeat checks for unrelated work. A documentation-only change needs a small content or path check, not the Python test suite. Apply the coverage requirement above when verifying Python implementation work.
+
+For Foundry implementation examples, also search `/Users/ozgurguler/Developer/Projects/foundry-samples-reference`, the reference checkout of `https://github.com/microsoft-foundry/foundry-samples`. Inspect sample READMEs, dependencies, and infrastructure templates when relevant; cite commit-pinned source links. Use the `foundry-search-updates` skill for upstream documentation and sample changes. Fetch and fast-forward only this clean reference checkout; preserve dirty or diverged work. Do not modify the separate existing `foundry-samples` checkout, run sample code, or deploy resources merely to answer a question. Sample commits do not establish product availability.
 
 ## Changes and Git
 

@@ -1,0 +1,20 @@
+# Pre-release gate: Strands Evals over data/cases.jsonl against the local twin of the ticket agent.
+# OIDC role, no access keys. Fails the job when the mean score is under the threshold.
+name: ticket-agent-eval-gate
+on: [pull_request]
+permissions: { id-token: write, contents: read }
+jobs:
+  evals:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.13" }
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/github-evals
+          aws-region: us-east-1
+      - run: pip install -r Agent-Build-04-AWS-Bedrock-Agent-Core/labs-setup/requirements.txt
+      - run: python 06_strands_evals_ci.py --threshold 0.8
+        working-directory: Agent-Build-04-AWS-Bedrock-Agent-Core/B05-AgentCore-Evals-and-Observability/labs/02-evals
+        env: { AWS_REGION: us-east-1, BEDROCK_MODEL_ID: global.anthropic.claude-haiku-5-5, BEDROCK_JUDGE_MODEL_ID: global.anthropic.claude-sonnet-5-5 }

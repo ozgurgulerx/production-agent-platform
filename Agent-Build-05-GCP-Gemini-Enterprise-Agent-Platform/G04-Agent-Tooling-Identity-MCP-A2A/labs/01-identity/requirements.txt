@@ -1,0 +1,6 @@
+# Pinned from ../../../labs-setup/requirements.txt on 2026-10-25
+google-adk[a2a,gcp,mcp]==2.13.0
+google-cloud-agentplatform==2.6.0
+google-cloud-aiplatform[agent_engines,adk]==2.6.0
+google-genai==2.33.0
+python-dotenv==1.2.4

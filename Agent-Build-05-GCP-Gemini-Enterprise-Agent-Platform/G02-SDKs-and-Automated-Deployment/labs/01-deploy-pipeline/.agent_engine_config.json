@@ -1,0 +1,8 @@
+{
+  "_comment": "Read by adk deploy agent_engine (map B6, C2, C5). identity_type AGENT_IDENTITY means no service account. Replace the bucket with AGENT_RUNTIME_STAGING_BUCKET from .env; keys beyond these three are unverified against the current schema.",
+  "identity_type": "AGENT_IDENTITY",
+  "staging_bucket": "gs://TODO-learner-same-region-as-GOOGLE_CLOUD_LOCATION",
+  "env_vars": {
+    "GOOGLE_GENAI_USE_VERTEXAI": "TRUE"
+  }
+}

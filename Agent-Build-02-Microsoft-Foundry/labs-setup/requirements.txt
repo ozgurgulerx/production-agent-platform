@@ -1,0 +1,20 @@
+# Pinned on 2026-10-25 against Python 3.13. Regenerate with: .venv/bin/pip freeze | grep -E '^(agent-framework|azure-|openai|python-dotenv)'.
+# NOTE: agent-framework-foundry 1.15.0 pins azure-ai-projects<2.8. 13-foundry-evals needs >=2.9 and has its own requirements.txt / venv.
+agent-framework-core==1.23.0
+agent-framework-foundry==1.15.0
+agent-framework-foundry-hosting==1.0.0b261022
+agent-framework-a2a==1.0.0b261022
+azure-ai-projects==2.7.0
+azure-ai-agentserver-core==2.3.0b1
+azure-ai-agentserver-responses==2.4.0b1
+azure-ai-agentserver-invocations==1.2.0
+azure-ai-evaluation==1.18.10
+azure-identity==1.26.0
+azure-monitor-opentelemetry==1.8.11
+openai==3.37.0
+python-dotenv==1.2.4
+ipykernel
+nbformat
+nbconvert
+azure-storage-blob==12.31.0
+foundry-local-sdk==2.2.1        # F07 only

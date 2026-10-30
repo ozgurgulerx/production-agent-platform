@@ -1,0 +1,18 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "DenyUserTokenEscalation",
+      "Effect": "Deny",
+      "Action": ["bedrock-agentcore:GetWorkloadAccessTokenForUserId"],
+      "Resource": "*"
+    },
+    {
+      "Sid": "DenyFullAccessAttachment",
+      "Effect": "Deny",
+      "Action": ["iam:AttachRolePolicy", "iam:AttachUserPolicy"],
+      "Resource": "*",
+      "Condition": {"ArnEquals": {"iam:PolicyARN": "arn:aws:iam::aws:policy/BedrockAgentCoreFullAccess"}}
+    }
+  ]
+}

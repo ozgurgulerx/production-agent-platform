@@ -1,0 +1,29 @@
+# Shape only. A Harness definition with every block the CreateHarness API accepts (boto3 1.43.118, 25 Oct 2026).
+# The CLI's harness.yaml key spelling is not verified; the API-side meaning is.
+harnessName: ticket_agent_harness
+executionRoleArn: arn:aws:iam::123456789012:role/agentcore-ticket-harness
+model:
+  bedrockModelConfig: {modelId: global.anthropic.claude-haiku-5-5, maxTokens: 800, temperature: 0.2, apiFormat: converse_stream}
+  # or openAiModelConfig {modelId, apiKeyArn, apiBase}, geminiModelConfig, liteLlmModelConfig
+systemPrompt:
+  - text: UK card-team ticket assistant. Refunds above 250 GBP need a human.
+tools:
+  - {type: inline_function, name: get_ticket, config: {inlineFunction: {description: Return a ticket, inputSchema: {json: {type: object, properties: {ticket_id: {type: string}}, required: [ticket_id]}}}}}
+  - {type: agentcore_gateway, name: ticket_tools, config: {agentCoreGateway: {gatewayArn: arn:aws:bedrock-agentcore:us-east-1:123456789012:gateway/REPLACE}}}
+  - {type: remote_mcp, name: docs, config: {remoteMcp: {url: https://knowledge-mcp.global.api.aws}}}
+  - {type: agentcore_code_interpreter, name: python, config: {agentCoreCodeInterpreter: {codeInterpreterArn: arn:aws:bedrock-agentcore:us-east-1:aws:code-interpreter/aws.codeinterpreter.v1}}}
+  - {type: agentcore_browser, name: browser, config: {agentCoreBrowser: {browserArn: arn:aws:bedrock-agentcore:us-east-1:aws:browser/aws.browser.v1}}}
+allowedTools: [get_ticket, ticket_tools___list_tickets]     # Gateway tools are named <Target>___<tool>
+skills:
+  - {s3: {uri: s3://my-bucket/skills/refund-policy/}}        # SKILL.md folders; also path:, git:, awsSkills:
+memory:
+  agentCoreMemoryConfiguration: {arn: arn:aws:bedrock-agentcore:us-east-1:123456789012:memory/REPLACE, actorId: "{userId}", retrievalConfig: {"/tickets/{actorId}/facts": {topK: 5}}}
+  # or managedMemoryConfiguration: {strategies: [SEMANTIC, USER_PREFERENCE], eventExpiryDuration: 30}
+authorizerConfiguration:
+  customJWTAuthorizer: {discoveryUrl: https://cognito-idp.us-east-1.amazonaws.com/POOL/.well-known/openid-configuration, allowedClients: [CLIENT_ID]}
+environment:
+  agentCoreRuntimeEnvironment: {lifecycleConfiguration: {idleRuntimeSessionTimeout: 900, maxLifetime: 28800}, networkConfiguration: {networkMode: PUBLIC}}
+maxIterations: 10
+maxTokens: 20000
+timeoutSeconds: 600
+# hooks: before/after tool-call hooks (Sep 2026) appear as hookEvent items in the InvokeHarness stream

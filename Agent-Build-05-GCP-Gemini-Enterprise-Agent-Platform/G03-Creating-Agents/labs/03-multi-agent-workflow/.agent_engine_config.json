@@ -1,0 +1,11 @@
+{
+  "display_name": "ticket-agent-workflow",
+  "description": "Triage, lookup and reply as one SequentialAgent; one ReasoningEngine for three agents.",
+  "identity_type": "AGENT_IDENTITY",
+  "agent_framework": "google-adk",
+  "env_vars": {
+    "GOOGLE_GENAI_USE_VERTEXAI": "TRUE",
+    "GEMINI_MODEL": "gemini-3.5-flash"
+  },
+  "_notes": "Same shape as ../02-agent-runtime/.agent_engine_config.json (maps B6, C5). Key names beyond identity_type, env_vars, agent_framework, display_name are unverified."
+}

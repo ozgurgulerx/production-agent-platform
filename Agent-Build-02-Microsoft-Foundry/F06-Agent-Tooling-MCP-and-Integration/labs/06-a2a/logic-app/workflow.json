@@ -1,0 +1,35 @@
+{
+  "definition": {
+    "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+    "contentVersion": "1.0.0.0",
+    "triggers": {
+      "When_a_HTTP_request_is_received": {
+        "type": "Request", "kind": "Http",
+        "inputs": { "schema": { "type": "object", "properties": { "question": { "type": "string" } } } }
+      }
+    },
+    "actions": {
+      "Call_Foundry_agent_Responses": {
+        "type": "Http",
+        "inputs": {
+          "method": "POST",
+          "uri": "@{parameters('projectEndpoint')}/agents/@{parameters('agentName')}/endpoint/protocols/openai/responses?api-version=v1",
+          "headers": { "Content-Type": "application/json" },
+          "body": { "input": "@{triggerBody()?['question']}" },
+          "authentication": { "type": "ManagedServiceIdentity", "audience": "https://ai.azure.com" }
+        },
+        "runAfter": {}
+      },
+      "Response": {
+        "type": "Response", "kind": "Http",
+        "inputs": { "statusCode": 200, "body": "@{body('Call_Foundry_agent_Responses')?['output_text']}" },
+        "runAfter": { "Call_Foundry_agent_Responses": [ "Succeeded" ] }
+      }
+    },
+    "parameters": {
+      "projectEndpoint": { "type": "String", "defaultValue": "https://<resource>.services.ai.azure.com/api/projects/<project>" },
+      "agentName": { "type": "String", "defaultValue": "ticket-agent-workflow" }
+    }
+  },
+  "kind": "Stateful"
+}

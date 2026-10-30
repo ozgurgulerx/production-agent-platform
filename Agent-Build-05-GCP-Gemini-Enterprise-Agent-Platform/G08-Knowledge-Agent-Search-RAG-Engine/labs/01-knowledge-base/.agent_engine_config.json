@@ -1,0 +1,9 @@
+{
+  "display_name": "ticket-agent",
+  "description": "Support-ticket agent with policy knowledge (G08 lab 01)",
+  "identity_type": "AGENT_IDENTITY",
+  "agent_framework": "google-adk",
+  "env_vars": {
+    "GOOGLE_GENAI_USE_VERTEXAI": "TRUE"
+  }
+}

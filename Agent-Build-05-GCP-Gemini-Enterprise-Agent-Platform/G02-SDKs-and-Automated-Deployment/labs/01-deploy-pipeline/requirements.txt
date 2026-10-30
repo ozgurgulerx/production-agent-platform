@@ -1,0 +1,8 @@
+# Pinned from ../../../labs-setup/requirements.txt (25 Oct 2026). adk deploy adds its own
+# google-cloud-aiplatform[adk,agent_engines]>=2.2,<3 and google-adk[a2a]==<installed> lines (map C2).
+google-adk[a2a,gcp,eval,mcp]==2.13.0
+google-cloud-agentplatform==2.6.0
+google-cloud-aiplatform[agent_engines,adk]==2.6.0
+google-genai==2.33.0
+python-dotenv==1.2.4
+pytest

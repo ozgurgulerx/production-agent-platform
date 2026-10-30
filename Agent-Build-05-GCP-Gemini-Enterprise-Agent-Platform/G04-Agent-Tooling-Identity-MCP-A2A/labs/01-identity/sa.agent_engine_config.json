@@ -1,0 +1,6 @@
+{
+  "display_name": "ticket-agent-sa",
+  "description": "G04 lab 01 comparison row only: runs as a service account because identity_type is unset (map C5)",
+  "min_instances": 0,
+  "max_instances": 1
+}

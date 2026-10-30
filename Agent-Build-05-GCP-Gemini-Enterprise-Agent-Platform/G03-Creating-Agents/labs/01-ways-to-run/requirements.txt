@@ -1,0 +1,5 @@
+# Subset of ../../../labs-setup/requirements.txt, same pins (25 Oct 2026). Install the shared venv instead of this file.
+google-adk[a2a,gcp,eval,mcp]==2.13.0
+google-genai==2.33.0
+python-dotenv==1.2.4
+pytest

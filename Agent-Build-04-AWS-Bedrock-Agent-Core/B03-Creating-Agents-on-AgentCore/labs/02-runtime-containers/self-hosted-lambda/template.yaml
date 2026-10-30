@@ -1,0 +1,25 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Way 6, the ticket agent self-hosted on Lambda with a function URL (IAM auth). Deploy with `sam build && sam deploy --guided`.
+Resources:
+  TicketAgent:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: handler.lambda_handler
+      Runtime: python3.13
+      Architectures: [arm64]
+      Timeout: 60
+      MemorySize: 1024
+      Environment:
+        Variables:
+          BEDROCK_MODEL_ID: global.anthropic.claude-haiku-5-5
+      Policies:
+        - Statement:
+            - Effect: Allow
+              Action: [bedrock:InvokeModel, bedrock:InvokeModelWithResponseStream]
+              Resource: '*'
+      FunctionUrlConfig:
+        AuthType: AWS_IAM          # Gateway calls it with the gateway role (CALLER_IAM_CREDENTIALS or GATEWAY_IAM_ROLE), see B04 lab 06
+Outputs:
+  FunctionUrl:
+    Value: !GetAtt TicketAgentUrl.FunctionUrl

@@ -1,0 +1,39 @@
+# Untested sketch. Eval gate before deploy, composed by this chapter (map E7: no first-party page wires adk eval into Cloud Build).
+# Parts that are documented: AgentEvaluator under pytest (E1), adk deploy agent_engine flags (B6, C2), agent-starter-pack's
+# pr_checks.yaml / staging.yaml / deploy-to-prod.yaml split (I11). Run with: gcloud builds submit --config sketches/cloudbuild_eval_gate.yaml
+substitutions:
+  _REGION: europe-west2
+  _AGENT_ENGINE_ID: ""            # existing reasoningEngines/ID to update; empty would create a new agent (B6)
+  _AGENT_DIR: G05-Evals-and-Observability/labs/02-evals/agent
+options:
+  logging: CLOUD_LOGGING_ONLY
+steps:
+  - id: install
+    name: python:3.13-slim
+    entrypoint: bash
+    args: ["-c", "pip install -r Agent-Build-05-GCP-Gemini-Enterprise-Agent-Platform/labs-setup/requirements.txt"]
+
+  - id: eval-gate
+    name: python:3.13-slim
+    entrypoint: bash
+    env:
+      - GOOGLE_GENAI_USE_VERTEXAI=TRUE
+      - GOOGLE_CLOUD_PROJECT=$PROJECT_ID
+      - GOOGLE_CLOUD_LOCATION=${_REGION}
+    # pytest fails when tool_trajectory_avg_score < 1.0 or response_match_score < 0.8 (E1 defaults) in the evalset.
+    args: ["-c", "pytest Agent-Build-05-GCP-Gemini-Enterprise-Agent-Platform/G05-Evals-and-Observability/labs/02-evals/test_02_evals.py -q"]
+
+  - id: deploy
+    name: python:3.13-slim
+    entrypoint: bash
+    # Only reached when eval-gate passed. --otel_to_cloud keeps traces on (E4); --agent_engine_id updates in place (B6).
+    args:
+      - -c
+      - >
+        adk deploy agent_engine --project=$PROJECT_ID --region=${_REGION}
+        --agent_engine_id=${_AGENT_ENGINE_ID} --display_name=ticket-agent --otel_to_cloud
+        ${_AGENT_DIR}
+
+# TODO(learner): a post-deploy step that runs labs/02-evals/platform_eval.py against the new revision and, on regression,
+# moves traffic back to the previous active revision with client.runtimes.update(traffic_config=...) (C4, preview).
+# The Cloud Build service account needs the Agent Runtime roles from map I6.

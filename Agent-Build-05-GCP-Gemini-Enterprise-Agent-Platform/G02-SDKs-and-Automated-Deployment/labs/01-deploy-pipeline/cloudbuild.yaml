@@ -1,0 +1,86 @@
+# Cloud Build pipeline for ticket-agent: build -> eval gate (placeholder) -> deploy -> traffic 10/90 -> promote.
+# Stage shape follows the starter pack's pr_checks/staging/deploy-to-prod split (map I11) and agents-cli
+# infra cicd (I12), collapsed into one file for the lab. Trigger it with gcloud builds submit (lab README)
+# or a push trigger on main. Status 25 Oct 2026: scaffold only, functionality unverified.
+#
+# Substitutions: _REGION, _AGENT_ID (numeric id from reasoningEngines/<ID>), _NEW_TRAFFIC (default 10).
+# The Cloud Build service account needs the deploy roles from map I6; see lab README.
+
+substitutions:
+  _REGION: europe-west2
+  _AGENT_ID: ""
+  _NEW_TRAFFIC: "10"
+  _PYTHON_IMAGE: python:3.13-slim
+
+options:
+  logging: CLOUD_LOGGING_ONLY
+
+steps:
+  # 1. build: install pinned requirements, unit tests. No network to the platform here.
+  - id: build
+    name: ${_PYTHON_IMAGE}
+    dir: G02-SDKs-and-Automated-Deployment/labs/01-deploy-pipeline
+    entrypoint: bash
+    args:
+      - -c
+      - |
+        pip install -q -r requirements.txt
+        pytest -q || true   # TODO(learner): drop "|| true" once tests exist; an empty collection is not a pass
+
+  # 2. eval gate: placeholder. No first-party page wires adk eval into Cloud Build (E7).
+  #    Replace the echo with: adk eval . tests/ticket.evalset.json --config_file_path tests/eval_config.json (E1)
+  #    or: uvx google-agents-cli eval run ... (I12). A non-zero exit must stop the pipeline.
+  - id: eval-gate
+    name: ${_PYTHON_IMAGE}
+    dir: G02-SDKs-and-Automated-Deployment/labs/01-deploy-pipeline
+    entrypoint: bash
+    args:
+      - -c
+      - |
+        echo "EVAL GATE: placeholder, wire adk eval here (E1, E7)"
+        # TODO(learner): exit 1 when tool_trajectory_avg_score < 1.0 or response_match_score < 0.8 (E1 defaults)
+
+  # 3. deploy: update the existing resource so a new revision is created, never a new agent (C2, C4).
+  - id: deploy
+    name: ${_PYTHON_IMAGE}
+    dir: G02-SDKs-and-Automated-Deployment/labs/01-deploy-pipeline
+    entrypoint: bash
+    args:
+      - -c
+      - |
+        pip install -q -r requirements.txt
+        test -n "${_AGENT_ID}" || { echo "set _AGENT_ID to the numeric reasoningEngines id"; exit 1; }
+        adk deploy agent_engine . \
+          --project "$PROJECT_ID" --region "${_REGION}" \
+          --display_name ticket-agent --otel_to_cloud \
+          --agent_engine_id "${_AGENT_ID}" \
+          --agent_engine_config_file .agent_engine_config.json
+
+  # 4. traffic: newest revision at _NEW_TRAFFIC percent, previous at the rest (C4, preview v1beta1).
+  - id: traffic-split
+    name: ${_PYTHON_IMAGE}
+    dir: G02-SDKs-and-Automated-Deployment
+    entrypoint: bash
+    env:
+      - GOOGLE_CLOUD_PROJECT=$PROJECT_ID
+      - GOOGLE_CLOUD_LOCATION=${_REGION}
+      - AGENT_RUNTIME_RESOURCE=projects/$PROJECT_ID/locations/${_REGION}/reasoningEngines/${_AGENT_ID}
+    args:
+      - -c
+      - |
+        pip install -q -r labs/01-deploy-pipeline/requirements.txt
+        python sketches/traffic_split.py split --new ${_NEW_TRAFFIC}
+
+  # 5. promote: manual in the lab. Approve the build in the console, or run
+  #    `python sketches/traffic_split.py promote` / `rollback` by hand after the smoke check.
+  #    TODO(learner): add an approval-gated second trigger that runs promote (I11 deploy-to-prod shape).
+  - id: promote-note
+    name: ${_PYTHON_IMAGE}
+    entrypoint: bash
+    args:
+      [
+        "-c",
+        "echo 'PROMOTE: manual. smoke :query, then traffic_split.py promote or rollback (C4)'",
+      ]
+
+timeout: 1800s

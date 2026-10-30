@@ -1,0 +1,14 @@
+# azd twin of submit_sft.py:  azd ext install azure.ai.finetune && azd ai finetuning init -e $FOUNDRY_PROJECT_ENDPOINT && azd ai finetuning jobs submit -f job.yaml
+name: ticket-tone-sft
+description: UK card team tone and refund-policy phrasing on top of gpt-4.1-mini
+model: gpt-4.1-mini
+method:
+  type: supervised
+  supervised:
+    hyperparameters:
+      epochs: 3
+      batch_size: 8
+      learning_rate_multiplier: 0.1
+suffix: "ticket-tone"
+training_file: local:data/train.jsonl
+validation_file: local:data/validation.jsonl

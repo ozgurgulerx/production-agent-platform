@@ -1,0 +1,48 @@
+# G04 lab 03: MCP Toolbox for Databases 1.15.0 manifest for the ticketing server (map D7). Same file serves lab 02 over stdio.
+# Manifests separated by ---, each with a kind. ${VAR} and ${VAR:default} expand from the environment; on Cloud Run they come from --set-env-vars or secrets.
+kind: source
+name: tickets-db
+type: postgres
+host: ${TICKETS_DB_HOST}
+port: ${TICKETS_DB_PORT:5432}
+database: ${TICKETS_DB_NAME:tickets}
+user: ${TICKETS_DB_USER}
+password: ${TICKETS_DB_PASSWORD}
+readOnly: true
+---
+kind: authService
+name: google-user          # client sends the ID token in header `google-user_token`, or Authorization: Bearer in MCP Authorization mode
+type: google
+clientId: ${GOOGLE_OAUTH_CLIENT_ID}
+---
+kind: tool
+name: lookup_ticket
+type: postgres-sql
+source: tickets-db
+description: Look up one support ticket by id. Returns status, amount and when it was opened.
+parameters:
+  - name: ticket_id
+    type: integer
+    description: The numeric ticket id the customer quotes.
+statement: SELECT id, customer, status, amount, opened_at FROM tickets WHERE id = $1;
+---
+kind: tool
+name: my_open_tickets
+type: postgres-sql
+source: tickets-db
+description: Open tickets for the signed-in customer. The customer is taken from the caller's identity, not from the model.
+authRequired: [google-user]
+parameters:
+  - name: customer
+    type: string
+    description: Bound to the caller's `sub` claim; the model cannot set it.
+    authServices:
+      - name: google-user
+        field: sub
+statement: SELECT id, status, amount, opened_at FROM tickets WHERE customer = $1 AND status = 'open' ORDER BY opened_at;
+---
+kind: toolset
+name: ticketing
+tools: [lookup_ticket, my_open_tickets]
+# Not here on purpose: refund_ticket. Refund policy is a before_tool_callback in the agent (README section 4)
+# and the source is readOnly; Toolbox does not decide who may call (README section 5).

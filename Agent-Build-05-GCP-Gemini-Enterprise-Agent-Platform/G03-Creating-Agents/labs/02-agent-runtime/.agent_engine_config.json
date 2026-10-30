@@ -1,0 +1,11 @@
+{
+  "display_name": "ticket-agent",
+  "description": "S03 support-ticket agent: answers tickets, refuses refunds outside policy, cites policy documents.",
+  "identity_type": "AGENT_IDENTITY",
+  "agent_framework": "google-adk",
+  "env_vars": {
+    "GOOGLE_GENAI_USE_VERTEXAI": "TRUE",
+    "GEMINI_MODEL": "gemini-3.5-flash"
+  },
+  "_notes": "Read by `adk deploy agent_engine` (default --agent_engine_config_file, map B6). identity_type per map C5; unset means service account. No service_account key on purpose. Key names other than identity_type, env_vars, agent_framework, display_name are unverified: compare with map I7's config list before adding."
+}

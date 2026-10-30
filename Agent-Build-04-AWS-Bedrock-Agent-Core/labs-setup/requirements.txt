@@ -1,0 +1,16 @@
+# Pinned on 2026-10-25 against Python 3.13. Regenerate with: .venv/bin/pip freeze | grep -E '^(bedrock-agentcore|strands|boto3|aws-opentelemetry|mcp|python-dotenv)'.
+# The Python starter toolkit (bedrock-agentcore-starter-toolkit) is deprecated; the CLI is the Node package @aws/agentcore (npm), not pip.
+bedrock-agentcore[strands-agents,a2a]==1.25.0
+strands-agents[otel]==1.62.0
+strands-agents-tools==0.8.10
+strands-agents-evals==1.7.0
+boto3==1.43.118
+aws-opentelemetry-distro>=0.18.0
+mcp
+a2a-sdk
+python-dotenv==1.2.4
+httpx
+pyyaml
+ipykernel
+nbformat
+nbconvert

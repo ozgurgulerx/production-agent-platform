@@ -1,0 +1,7 @@
+# Separate venv: the evaluation surface (rubric generation, evals.runs targets) needs azure-ai-projects>=2.9,
+# which agent-framework-foundry 1.15 does not allow in the main .venv.
+azure-ai-projects==2.9.0
+azure-ai-evaluation==1.18.10
+azure-identity==1.26.0
+python-dotenv==1.2.4
+openai

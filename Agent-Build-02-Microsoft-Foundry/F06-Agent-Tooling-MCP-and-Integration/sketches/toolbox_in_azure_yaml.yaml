@@ -1,0 +1,22 @@
+# Untested sketch. A toolbox declared next to the hosted agent that uses it (azd). Credentials come from connections.
+services:
+  sn-conn:
+    host: azure.ai.connection
+    uses: [ai-project]
+    category: RemoteTool
+    target: https://<logic-app>.azurewebsites.net/api/mcpservers/servicenow/mcp
+    authType: CustomKeys
+    credentials: { type: CustomKeys, keys: { x-api-key: '${SN_KEY}' } }
+  ticket-tools:
+    host: azure.ai.toolbox
+    uses: [ai-project, sn-conn]
+    tools:
+      - { type: mcp, server_label: servicenow, server_url: https://<logic-app>.azurewebsites.net/api/mcpservers/servicenow/mcp, connection: sn-conn, require_approval: always }
+      - { type: web_search, name: web_search, require_approval: never }
+      - { type: toolbox_search }
+  ticket-agent:
+    host: azure.ai.agent
+    kind: hosted
+    uses: [ai-project, ticket-tools]
+    protocols: [{ protocol: responses, version: 2.0.0 }]
+    env: { TOOLBOX_ENDPOINT: ${TOOLBOX_TICKET_TOOLS_MCP_ENDPOINT} }

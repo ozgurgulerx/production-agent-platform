@@ -1,0 +1,32 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/Azure/azure-dev/main/schemas/v1.0/azure.yaml.json
+# Way 2 (azd flavour): the prompt agent as a declarative azd service. `azd deploy` creates a new version.
+requiredVersions:
+  azd: '>=1.34.2'
+  extensions:
+    azure.ai.agents: '>=1.0.0-beta.18'
+name: ticket-agent-prompt-azd
+services:
+  ai-project:
+    host: azure.ai.project
+    deployments:
+      - name: gpt-5-mini
+        model:
+          format: OpenAI
+          name: gpt-5-mini
+          version: '2025-08-07'
+        sku:
+          name: GlobalStandard
+          capacity: 10
+  ticket-agent-prompt-azd:
+    host: azure.ai.agent
+    uses:
+      - ai-project
+    kind: prompt
+    name: ticket-agent-prompt-azd
+    description: Support-ticket prompt agent defined in azure.yaml and deployed with azd.
+    model: gpt-5-mini
+    instructions: >-
+      You are the support-ticket assistant for a UK bank's card team. Answer briefly.
+      When you do not have a tool for something, say so instead of guessing.
+infra:
+  provider: microsoft.foundry

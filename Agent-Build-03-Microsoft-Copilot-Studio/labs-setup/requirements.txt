@@ -1,0 +1,17 @@
+# Pinned on 2026-10-25 against Python 3.13. Regenerate with: .venv/bin/pip freeze | grep -E '^(microsoft-agents|msal|azure-identity|httpx|mcp|pyyaml|python-dotenv)'.
+microsoft-agents-copilotstudio-client==1.9.0   # Direct-to-Engine client (M365 Agents SDK)
+microsoft-agents-hosting-aiohttp==1.9.0        # host your own Activity-protocol agent (C03 lab 04)
+microsoft-agents-activity==1.9.0
+microsoft-agents-authentication-msal==1.9.0    # MsalConnectionManager for the hosted SDK agent
+msal==1.39.0                                   # device-code auth, no client secrets
+azure-identity==1.26.0
+httpx
+mcp==2.3.0                                     # FastMCP ticket server (C04 lab 02)
+fastapi
+uvicorn
+pyyaml
+python-dotenv==1.2.4
+opentelemetry-api
+ipykernel
+nbformat
+nbconvert

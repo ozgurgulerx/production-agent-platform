@@ -1,0 +1,29 @@
+{
+  "_comment": "Untested sketch. A2A 1.0 agent card for ticket-agent-workflow as served at /.well-known/agent-card.json by to_a2a() or adk api_server --a2a (map C6, C7). Gemini Enterprise registers by pasting this JSON but speaks 0.3 streaming; use a2a.compat.v0_3 for that path (C9). Field set is the 1.0 shape as the map describes it; verify against the specification before relying on a key name.",
+  "name": "ticket-agent-workflow",
+  "description": "Triage, policy check and reply draft for a support ticket. Refuses refunds outside policy.",
+  "url": "https://TICKET_WORKFLOW_HOST/a2a/ticket-agent-workflow",
+  "version": "1.0.0",
+  "protocolVersion": "1.0",
+  "capabilities": { "streaming": true },
+  "defaultInputModes": ["text/plain"],
+  "defaultOutputModes": ["text/plain"],
+  "skills": [
+    {
+      "id": "triage_ticket",
+      "name": "Triage a ticket",
+      "description": "Classify severity and route; cites the policy document used.",
+      "tags": ["support", "triage"]
+    },
+    {
+      "id": "refund_policy_check",
+      "name": "Refund policy check",
+      "description": "States whether a refund is inside policy. Never issues the refund.",
+      "tags": ["support", "policy"]
+    }
+  ],
+  "securitySchemes": {
+    "google": { "type": "openIdConnect", "openIdConnectUrl": "https://accounts.google.com/.well-known/openid-configuration" }
+  },
+  "security": [{ "google": [] }]
+}

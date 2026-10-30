@@ -1,0 +1,7 @@
+{
+  "_comment": "Shape of agentcore/agentcore.json after `agentcore create --template agent-python-strands` then `agentcore add harness`. Keys are illustrative (CLI 1.0.0, 22 Oct 2026, not fetched in full); the CLI deploys it through a thin CDK app. Deploy: `agentcore deploy`; test: `agentcore invoke --harness ticket_agent_harness \"What is ticket T-1001 about?\"`; remove: `agentcore remove all --yes && agentcore deploy --yes`.",
+  "project": "ticket-agent",
+  "region": "us-east-1",
+  "harnesses": [{"name": "ticket_agent_harness", "config": "./harness.yaml"}],
+  "runtimes": [{"name": "ticket_agent_code", "entrypoint": "agent/main.py", "runtime": "PYTHON_3_13", "protocol": "HTTP"}]
+}

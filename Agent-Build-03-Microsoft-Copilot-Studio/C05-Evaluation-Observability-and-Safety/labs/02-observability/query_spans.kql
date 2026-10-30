@@ -1,0 +1,34 @@
+// C05 lab 02 — three queries over the environment-level export (reading map H2). Paste one at a time.
+
+// 1. Tool calls by name and outcome, last 24 h
+dependencies
+| where timestamp > ago(24h)
+| where name == "ExecuteTool"
+| extend tool = tostring(customDimensions["gen_ai.tool.name"])
+| summarize calls = count(), failures = countif(success == false), p50_ms = percentile(duration, 50) by tool
+| order by calls desc
+
+// 2. Every refund the agent attempted, with the amount it passed (anything above 250 is a breach)
+dependencies
+| where name == "ExecuteTool"
+| extend tool = tostring(customDimensions["gen_ai.tool.name"]),
+         args = tostring(customDimensions["gen_ai.tool.call.arguments"])
+| where tool == "issue_refund"
+| extend amount = todouble(parse_json(args)["amount_gbp"])
+| project timestamp, amount, success,
+          conversation = tostring(customDimensions["gen_ai.conversation.id"]),
+          result = tostring(customDimensions["gen_ai.tool.call.result"])
+| order by amount desc
+
+// 3. One conversation end to end (replace the id)
+let conv = "<gen_ai.conversation.id>";
+dependencies
+| where tostring(customDimensions["gen_ai.conversation.id"]) == conv
+| project timestamp, name, duration,
+          model = tostring(customDimensions["gen_ai.request.model"]),
+          tool = tostring(customDimensions["gen_ai.tool.name"]),
+          operation_Id, id, operation_ParentId
+| order by timestamp asc
+
+// verify: exact customDimensions keys in your workspace with
+// dependencies | where name == "ExecuteTool" | take 1 | project customDimensions

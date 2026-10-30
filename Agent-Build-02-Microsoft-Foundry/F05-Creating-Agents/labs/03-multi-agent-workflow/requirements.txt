@@ -1,0 +1,10 @@
+# Fully pinned per foundry-samples DEPENDENCY_POLICY. Same versions as the repo .venv (2026-10-25).
+agent-framework-core==1.23.0
+agent-framework-foundry==1.15.0
+agent-framework-foundry-hosting==1.0.0b261022
+azure-ai-projects==2.7.0
+azure-ai-agentserver-core==2.3.0b1
+azure-ai-agentserver-responses==2.4.0b1
+azure-identity==1.26.0
+openai==3.37.0
+python-dotenv==1.2.4

@@ -1,0 +1,6 @@
+# Subset of ../../../labs-setup/requirements.txt (pinned 2026-10-25). Install the shared venv instead of this file.
+google-adk[eval,mcp]==2.13.0
+litellm>=1.84            # map H8: never 1.82.7 or 1.82.8 (compromised 2026-03-24)
+python-dotenv==1.2.4
+numpy                    # ../../sketches/int4_by_hand.py
+pytest
