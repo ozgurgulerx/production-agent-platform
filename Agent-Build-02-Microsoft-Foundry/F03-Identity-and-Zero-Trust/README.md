@@ -1,104 +1,10 @@
 # F03 — Identity and Zero Trust for agents
 
+**Status:** learning material; no implementation verified. Architecture target **3**, code C1 target **F3**, current scores **unassessed**. Applied MCP and toolbox exercises remain in [F06](../F06-Agent-Tooling-MCP-and-Integration/README.md); this module establishes the reasoning needed to explain them.
+
 [Capability builds and exact checklist targets](capability-builds.md#build-contract)
 
-Foundry splits operations into control plane (what a user can configure / provision on foundry e.g. agents) and data plane, what an agent can do - which services can it call...?
-
-Microsoft Entra ID is Azure's identity system.
-Microsoft Entra ID maintains a directory of identities.
-An identity can represent a human user or software, such as an application or agent.
-Each identity object has a unique identifier called its **object ID**.
-
-There are two main types of objects in Entra.
-The **user object** assigned to users and the software **service principal object** - that is assigned to software.
-Obviously each has a unique object ID, and each can be granted permissions.
-
-A service principal represents the software’s identity in Entra—the who.
-The software must authenticate, meaning prove that it is entitled to act as that identity. An ordinary application can use a certificate, client secret, or configured federation.
-With a managed identity, Azure manages the authentication credentials, so you do not need to create, store, or rotate them yourself.
-When you enable a system-assigned managed identity on a supported Azure resource, Azure creates a special service principal in Entra to represent it.
-You then grant that identity permissions through role assignments. These determine what it is allowed to do—authorization.
-
-To grant access, you create a **role assignment** linking:
-(Managed) Identity (who) + role (what actions) + scope (where).
-This is authorization. The managed identity remains an identity; each role assignment is a separate record defining its permissions.
-
-An agent identity is a special service principal in Microsoft Entra ID that represents an agent instance.
-It has its own object ID and can receive supported permissions. **Microsoft Entra Agent ID** is the product/capability name.
-
-An agent identity is distinct from a system-assigned or user-assigned managed identity.
-It authenticates through its agent identity blueprint, rather than holding its own credentials. [Microsoft Entra agent identities](https://learn.microsoft.com/en-us/entra/agent-id/agent-identities)
-
-In Foundry’s current model: Foundry automatically creates a unique blueprint for each newly created agent, plus an identity for its default instance.
-You normally do not select a template from a list. Entra blueprints, Foundry provisioning. [Agent identity concepts in Microsoft Foundry](https://learn.microsoft.com/en-us/azure/foundry/agents/concepts/agent-identity)
-
-
-### MCP Operation
-
-For an MCP tool configured to use Entra agent identity authentication:
-
-   Component                Role
-  ━━━━━━━━━━━━━━━━━━━━━━━  ━━━━━━━━━━━━━━━━━━━━━━━━━━
-   Microsoft Entra ID       OAuth 2.0 authorization
-                            server: issues access
-                            tokens
-  ───────────────────────  ──────────────────────────
-   Foundry Agent Service    Acts as the MCP client
-                            on the agent’s behalf
-  ───────────────────────  ──────────────────────────
-   MCP server               Protected resource
-                            server: exposes tools
-                            and checks incoming
-                            access
-
-  The flow is:
-
-  1. Agent decides to call an MCP tool.
-  2. Foundry authenticates through the agent’s identity mechanism.
-  3. Entra issues an access token intended for that MCP server.
-  4. Foundry sends the MCP request with the access  token.
-  5. MCP server validates the token and checks permissions.
-  6. MCP server executes the permitted operation—or rejects it.
-
-  Authentication: “Which agent is calling?”
-  Authorization: “May that agent execute this toolwith these arguments?”
-
-  One more boundary matters: if the MCP server then
-  calls AI Search or Storage, that is another
-  protected call. It needs appropriate credentials
-  and permissions for that downstream service. The
-  token issued for the MCP server must not simply be
-  forwarded to a different API.
-
-  This describes Entra-based authentication. An MCP
-  server can instead use another authorization
-  provider or another supported authentication
-  method.
-
-
-
-1. Your App's managed identity authenticates to Foundry.
-Its Foundry RBAC assignments determine which supported data-plane operatoins it can perform - e.g. building or invoking agents
-2. Tool identity - what can the agent access through its tools.
-e.g. a complaints agent might need access to AI Search, storage, tickets API but not to payments API.
-
-The model choosing to call a tool does not grant permission.
-The target service checks the identity and rejects unauthorized operations.
-
-So your design sequence is:
-
-1. Identify which tools and operations the agent needs.
-2. Choose which identity each tool call uses—an application/managed identity or delegated user access where supported.
-3. Grant minimum permissions at the target resource.
-4. Enforce finer business rules inside the tool.
-5. Test both allowed and denied actions.
-
-Attaching a tool defines what the agent can attempt; identity, authorization, and tool-side controls determine what it can actually do.
-
-
 An authenticated agent is not automatically authorised to read a customer's records or perform a refund. This module follows identity from employee sign-in through retrieval and tool execution, separating the caller, the application and the downstream resource at every boundary.
-
-**Status:** learning material; no implementation verified. Architecture target **3**, code C1 target **F3**, current scores **unassessed**. Applied MCP and toolbox exercises remain in [F06](../F06-Agent-Tooling-MCP-and-Integration/README.md); this module establishes the reasoning needed to explain them.
 
 ## 1. Foundations and prerequisites
 
@@ -112,6 +18,84 @@ Know HTTP headers/status codes, Azure resources, and Python functions/exceptions
 | Service principal | Tenant-local representation used for application access and assignments. |
 | Managed identity | Azure-managed workload identity; system-assigned lifecycle follows a resource, while user-assigned identities can be managed separately. |
 | Access token | Credential intended for a particular resource; possession is not proof of permission for every operation. |
+
+### 1a. Microsoft Entra ID, managed identities and Agent ID
+
+#### Microsoft Entra ID: the directory of identities
+
+**Microsoft Entra ID is Microsoft's cloud identity and access management service.** It maintains a directory of identities within a tenant. An identity can represent a human user or software, such as an application or agent. Each directory object has its own **object ID**.
+
+For this workload, distinguish three objects:
+
+- A **user object** represents a person.
+- An **application object** defines an application and its authentication configuration and exposed permissions.
+- A **service principal** represents that application in a particular tenant. It is the identity to which that tenant grants access.
+
+The application's **application/client ID** identifies the application; it is different from the **object ID** of its tenant-local service principal. See [applications and service principals](https://learn.microsoft.com/en-us/entra/identity-platform/app-objects-and-service-principals).
+
+#### Managed identity: Azure manages the credentials
+
+A service principal answers **“who is calling?”** The software must still authenticate: prove that it is entitled to act as that identity. An ordinary application can use a certificate, client secret or configured federation trust.
+
+With a **managed identity**, Azure manages the authentication credentials, so you do not create, store or rotate them yourself. Enabling a system-assigned managed identity on a supported Azure resource creates a special service principal to represent it. Its lifecycle follows that resource. A user-assigned managed identity has an independent lifecycle and can be assigned to supported resources.
+
+You grant that identity permissions separately. **Authentication proves the identity; authorization determines what it may do.** Creating a managed identity does not automatically give it access to your data. See [managed identities](https://learn.microsoft.com/en-us/entra/identity/managed-identities-azure-resources/overview).
+
+#### Microsoft Entra Agent ID: an identity for an agent
+
+**Microsoft Entra Agent ID** is the product/capability name. An **agent identity** is a special service principal representing an agent instance. It has its own object ID and can receive supported permissions.
+
+An agent identity is distinct from a system-assigned or user-assigned managed identity. It authenticates through its **agent identity blueprint**, rather than holding its own credentials. The blueprint supports the agent identity's authentication mechanism; it is not itself a grant of access to every tool. See [Microsoft Entra agent identities](https://learn.microsoft.com/en-us/entra/agent-id/agent-identities).
+
+In the documented Foundry model, Foundry automatically creates a unique blueprint for each newly created agent, plus an identity for its default instance. You normally do not select a template from a list: Foundry handles this provisioning. See [agent identity concepts in Foundry](https://learn.microsoft.com/en-us/azure/foundry/agents/concepts/agent-identity).
+
+#### From an identity to permission
+
+An **Azure role assignment = principal + role + resource scope**. It is a separate authorization record, not part of the identity itself. API application roles and delegated scopes use their own grants; an Azure IAM assignment does not automatically grant an arbitrary MCP tool permission.
+
+Separate control-plane resource provisioning from supported Foundry data-plane operations, such as agent creation/invocation. Then identify the principal used by each downstream tool. The caller's Foundry access does not imply access to Search, Storage or a refund API.
+
+Design in order: list required tool operations; choose the principal or supported delegated flow for each; grant minimum target-resource permissions; enforce business rules inside the tool; test allowed and denied actions. Attaching a tool only defines what the model can attempt.
+
+### 1b. Token anatomy
+
+For a JWT access token issued to your API, inspect these claims only after supported middleware validates the signature and trusted issuer. Client applications should treat tokens for other APIs as opaque.
+
+| Claim | Meaning / check |
+|---|---|
+| `iss`, `tid` | Issuer and tenant; enforce the intended tenant trust boundary |
+| `aud` | Intended API; reject a token for a different resource |
+| `exp`, `nbf`, `iat` | Expiry, not-before and issue times; enforce validity with the library's clock-skew policy |
+| `oid`, `sub` | Tenant object ID and subject; identify the caller in the validated tenant context |
+| `azp` / `appid` | Client application ID in v2 / v1 tokens respectively |
+| `scp` | Space-separated delegated scopes |
+| `roles` | API roles; application permissions for app-only access, or assigned user roles in delegated tokens |
+| `ver` | Token version; select the corresponding issuer/claim interpretation |
+
+Synthetic decoded **v2 app-only payload** for a custom ticket API; these invented identifiers and historical timestamps are teaching data, not a signed or usable token:
+
+```json
+{
+  "ver": "2.0",
+  "iss": "https://login.microsoftonline.com/11111111-1111-4111-8111-111111111111/v2.0",
+  "tid": "11111111-1111-4111-8111-111111111111",
+  "aud": "22222222-2222-4222-8222-222222222222",
+  "oid": "33333333-3333-4333-8333-333333333333",
+  "sub": "33333333-3333-4333-8333-333333333333",
+  "azp": "44444444-4444-4444-8444-444444444444",
+  "iat": 1700000000,
+  "nbf": 1700000000,
+  "exp": 1700003600,
+  "roles": ["Tickets.Read"]
+}
+```
+
+**S27 recall card:**
+
+- `scp`: delegated scopes, space-separated; check the required scope and the user's resource access.
+- `roles`: API roles, an array; app-only permissions or user roles—its presence alone does not prove app-only access.
+
+Source: [access-token claims reference](https://learn.microsoft.com/en-us/entra/identity-platform/access-token-claims-reference).
 
 Do not use an ID token as an API access token. Do not read an unvalidated token payload and treat its claims as trustworthy. Token validation belongs in supported authentication middleware or libraries; a JWT is a format, not a security decision.
 
@@ -150,6 +134,14 @@ sequenceDiagram
 Choose delegated access when the downstream operation should reflect the user's permissions and the API supports that flow. Choose application access for a workload-owned job with its own bounded authority. Do not convert an authorisation failure into an application-identity retry: that can silently widen access.
 
 An overnight document indexer is an application job. Reading one employee's private material may require delegated access. A refund approval is a business decision recorded by the tool service; an OAuth scope alone is not proof that this refund satisfies policy.
+
+### Microsoft Graph permissions and consent
+
+Choose the Graph endpoint first, then its least-privileged supported permission. **Delegated access** combines the app's granted scopes with the signed-in user's authority; consent does not give that user access to another person's restricted data. User consent depends on tenant policy and permission type; privileged delegated permissions require administrator consent.
+
+**Application access** uses the app's own authority without a signed-in user and requires administrator consent for Graph application permissions. Record the tenant, client service principal, resource API, exact permission and consent grant. Use resource-specific restrictions where the chosen API supports them. Request a Graph token through the appropriate flow; do not forward the MCP API's incoming token to Graph or silently switch a denied delegated call to app-only.
+
+Evidence: show the redacted grant record, an allowed request and a denied request. A configured permission on an app registration is not evidence that consent was granted. Deep dives remain in [F11](../F11-Copilot-Studio-and-M365-Boundary/README.md). Sources: [Graph permissions](https://learn.microsoft.com/en-us/graph/permissions-overview) and [Entra consent](https://learn.microsoft.com/en-us/entra/identity-platform/permissions-consent-overview), local sections **Delegated access** and **Consent**.
 
 ## 4. Principal-to-resource matrix
 
@@ -331,16 +323,33 @@ Treat an MCP server as a protected API. The server validates the token intended 
 
 APIM may enforce an outer authentication or rate-limit policy, but the backend still owns resource-specific authorisation. Ensure the backend cannot be reached through an unintended route that bypasses required controls. Application-generated identity headers are trustworthy only across a secured, explicitly designed boundary.
 
-| Plane | Question to answer | Useful evidence |
-|---|---|---|
-| Identity | Who is the caller, and why is it trusted? | Validated issuer/audience and principal; consent/role records |
-| Device | Does the user's access policy require a compliant device? | Applicable sign-in policy outcome, not an assumption about workload identities |
-| Network | Which ingress and egress paths are permitted? | DNS/connectivity and denied-route checks |
-| Application | Which operation and resource may this principal use? | Denied tool and ticket cases |
-| Data | Which documents and fields may enter context or logs? | Permission-trimmed results and redaction checks |
-| Visibility | Can an operator reconstruct the decision safely? | Correlation IDs, decision codes and restricted audit records |
+| Plane | Named Azure / Microsoft control | Target principal or traffic | Useful evidence |
+|---|---|---|---|
+| Identity | Entra Conditional Access: require MFA for selected user access | Employee users accessing the protected app; use separately supported policies for workloads/agents | Sign-in policy result and denied sign-in |
+| Privileged administration | Entra PIM: time-bound, approved role activation | Human administrator eligible for an Azure/Entra role | Activation and expiry record; denied operation without activation |
+| Session | Continuous Access Evaluation (CAE) | User sessions at supported resources/clients; workload support is separate | Supported revocation event and claims-challenge handling |
+| Device | Conditional Access “require compliant device” with Intune | Employee on a managed device, not a headless daemon | Noncompliant-device denial |
+| Network — private ingress | Azure Private Link / private endpoint, with public access disabled where supported | Network path used by the runtime; this is not a principal grant | Private DNS resolution and denied public route |
+| Network — segmentation | Network Security Group | Subnet/NIC traffic by address, port and protocol | Denied disallowed source/port |
+| Network — egress | Azure Firewall | Routed outbound workload traffic | Denied unapproved destination and firewall log |
+| Network — remote connectivity | Azure VPN Gateway | Approved cross-premises tunnel traffic | Tunnel and route evidence; API authorization still required |
+| Network — web ingress | Azure Application Gateway WAF | HTTP requests reaching the application | WAF block record; backend bypass check |
+| Transport | HTTPS/TLS on the API gateway and backend | Client-to-server connections; server certificate trust | Certificate/protocol validation; rejected plaintext route |
+| Application | APIM `validate-azure-ad-token` policy | Calling user or application principal | Wrong-audience denial; backend separately checks tool permission and ticket entitlement |
+| Data | Azure AI Search document-level access control or supported security filters | Employee's validated document permissions, even with a shared retrieval identity | Two-user results with denied documents absent |
+| Visibility | Azure Monitor / Application Insights | Requests attributed to caller; audit-reader access separately restricted | Correlation ID and decision code without tokens |
 
-Conditional Access, PIM and access reviews support governance, but their applicability differs across users, applications and agent identities. Explain which principal a policy targets. Never assume an interactive-user policy automatically governs every daemon.
+[Conditional Access](https://learn.microsoft.com/en-us/entra/identity/conditional-access/overview) targets selected identities/resources; a user MFA policy does not automatically protect a daemon. [PIM](https://learn.microsoft.com/en-us/entra/id-governance/privileged-identity-management/pim-configure) limits human administrative privilege. [CAE](https://learn.microsoft.com/en-us/entra/identity/conditional-access/concept-continuous-access-evaluation) is resource/client-dependent, not universal JWT revocation; [workload CAE](https://learn.microsoft.com/en-us/entra/identity/conditional-access/concept-continuous-access-evaluation-workload) does not currently support managed identities. A custom MCP API needs its own supported enforcement design.
+
+Network controls restrict paths and traffic, not business permissions. Use [Azure network controls](https://learn.microsoft.com/en-us/azure/security/fundamentals/network-overview) with identity checks at every protected API. F02 owns topology detail; this table is the request-by-request whiteboard answer.
+
+### Key Vault secret access and rotation
+
+Prefer managed identity when the target supports it. If a backend requires a secret, give the consuming runtime only the required Key Vault secret-read access; keep rotation authority separate. Vault access lets a principal retrieve a credential—it does not independently authorize a business operation at the target.
+
+Rotation must update the credential at its issuing system and store the corresponding new secret version, refresh consumers, verify an authenticated call, and retire the old credential. Plan overlap or interruption for the target's credential model; writing a new vault version alone is insufficient. Event Grid plus an Azure Function is one documented secret-rotation pattern. Do not confuse secret rotation with cryptographic key rotation policies.
+
+For APIM Key Vault-backed named values, use a versionless secret reference when automatic updates are intended. APIM documents refresh within four hours after an update; manual refresh is available. Include that delay in the cutover plan and test it. Record version IDs, timestamps and outcomes, never secret values. Deep dives remain in [F09](../F09-APIM-AI-Gateway/README.md). Sources: [secret rotation](https://learn.microsoft.com/en-us/azure/key-vault/secrets/tutorial-rotation), [APIM named values](https://learn.microsoft.com/en-us/azure/api-management/api-management-howto-properties).
 
 ## 7. Diagnose failures without weakening controls
 
@@ -358,16 +367,16 @@ HTTP codes alone are not a full diagnosis: services can surface policy/network f
 ## 8. Learner exercises and evidence
 
 1. Draw the delegated and application flows for the same downstream operation. State the audience, principal, permission source and validation owner at each arrow.
-2. Write a token-provider HTTP client in a 25-minute no-AI exercise. Use a fake provider for local tests. Cover expiry/refresh, bounded retry of transient failures and absence of tokens in logs. Do not build cryptographic token validation by hand.
+2. Write a token-provider HTTP client in a 25-minute no-AI exercise. Use a fake provider for local tests. Cover expiry/refresh, bounded retry of transient failures and absence of tokens in logs. Do not build cryptographic token validation by hand. Commit your implementation and tests under this module's `sketches/` after the exercise; log date, elapsed time, no-AI assistance status, test results and remaining gaps. One logged exercise is evidence, not automatic F3 qualification.
 3. Compare one developer call and the intended runtime call. Record which principal was used and the minimum role required. A local mock is not proof of Azure permission behaviour.
-4. Design and implement an MCP audience/scope test when the corresponding lab is requested. Include a valid token for the wrong audience and a caller missing the required tool permission.
+4. This week, run and extend the [S03.03 HTTP authorization tests](../../Agent-Build-01-Fundamentals/S03-AI-Agents-Tools-and-MCP/S03.03-MCP-OAuth2.1/tests/test_http_authorization.py) against its actual server boundary: a correctly signed, unexpired token for the wrong audience must be rejected; a caller missing the required tool permission must not execute the tool. The [S03.03 server](../../Agent-Build-01-Fundamentals/S03-AI-Agents-Tools-and-MCP/S03.03-MCP-OAuth2.1/README.md) checks scopes, so use the missing-scope case there; a missing required role in `roles` is the corresponding Entra app-role case in Section 6, not an interchangeable claim. Existing test code is not a fresh run: record the command, result, redacted denial and proof of no tool effect. That recorded denied run is the ticking-rule evidence; do not tick it from prose.
 5. Execute the two-user retrieval cases in F07. Record allowed/denied outcomes and how identity changes affect cached results.
 
 Completion requires explaining authentication versus authorisation, defending the permission matrix, diagnosing wrong audience/insufficient role/expired credential/missing consent, and showing denied cross-user access. Architecture 3 requires built evidence; F3 requires learner-written timed code without AI. Store actual evidence in the study log with date, assistance, result and gaps. Current scores remain **unassessed**.
 
 ## 9. Job-market identity requirements and interview evidence
 
-The following provenance is supplied by the learner from the contract digest, Cognizant requirement, and 7/13 October market studies. The underlying adverts and counts were not independently rechecked for this addition. Separate literal wording from architectural inference; a curriculum topic is not proof of an advertised requirement or completed proficiency.
+Provenance: learner-supplied contract digest, Cognizant requirement and 7/13 October market studies; requirements and counts have not been independently rechecked.
 
 ### What the supplied evidence actually names
 
@@ -391,9 +400,9 @@ The supplied review covers roughly 70 contract roles plus the Cognizant requirem
 | OIDC, SAML and OAuth | Section 6: user sign-in versus protected API access, provider/client/server roles, configuration and token boundaries | Explain each in one sentence, draw both sign-in flows, then explain why neither an ID token nor SAML assertion is the MCP access token |
 | RBAC and IAM | Sections 1 and 4: principal + permission + scope; distinguish Azure RBAC, Entra directory roles and API application roles | Produce a minimum-permission matrix and demonstrate one denied operation |
 | Zero Trust and secure-by-design | Sections 4–6: check each identity, resource and network boundary; design controls before deployment | Trace one request and explain authorization at every hop, including denied customer access |
-| Entra and Microsoft Graph | Section 3 plus [F11](../F11-Copilot-Studio-and-M365-Boundary/README.md): app-only versus delegated permissions and consent; Graph exposes protected Microsoft 365/directory APIs | Explain whose data is accessible and why; show approved permission and consent configuration without tokens |
+| Entra and Microsoft Graph | Section 3 (Graph consent) plus [F11](../F11-Copilot-Studio-and-M365-Boundary/README.md): app-only versus delegated permissions and consent; Graph exposes protected Microsoft 365/directory APIs | Explain whose data is accessible and why; show approved permission and consent configuration without tokens |
 | Managed identity and GitHub Actions | Section 2: runtime identity versus deployment identity; federation avoids stored pipeline credentials | Compare the developer, runtime and CI principals and their scopes |
-| Key Vault and APIM | [F09](../F09-APIM-AI-Gateway/README.md): secret access and rotation, gateway token validation, backend identity and bypass prevention | Explain why secret storage is not authorization and why gateway checks do not replace backend business rules |
+| Key Vault and APIM | Section 6 (secret access and rotation) plus [F09](../F09-APIM-AI-Gateway/README.md): secret access and rotation, gateway token validation, backend identity and bypass prevention | Explain why secret storage is not authorization and why gateway checks do not replace backend business rules |
 | Agent identity, MCP broker and OBO | Sections 3 and 6 plus [F06](../F06-Agent-Tooling-MCP-and-Integration/README.md): identify the actor, token audience and permission source at each hop | Trace a real permitted and denied tool call; do not silently replace delegated denial with broader app-only access |
 | Copilot and M365 tenancy | [F11](../F11-Copilot-Studio-and-M365-Boundary/README.md): tenant boundaries, publishing, consent and source access | Explain which tenant owns the app/user/resource and verify the selected integration's support |
 | Permission-aware RAG | Section 5 plus [F07](../F07-RAG-on-AI-Search/README.md): retrieval must respect document access before context construction | Two-user allowed/denied retrieval and cache-isolation evidence |
@@ -408,8 +417,6 @@ The supplied review covers roughly 70 contract roles plus the Cognizant requirem
 - [ ] First learn the explicit vocabulary cold: OIDC versus SAML, RBAC, IAM, Zero Trust and secure-by-design. Explain each without assuming prior identity knowledge.
 - [ ] Then defend the design: application/agent identities, least privilege, Graph consent, OBO, MCP authentication and permission-aware retrieval.
 - [ ] Finally produce runtime evidence: actual actor and audience, permitted/denied calls, safe traces, and approval/audit records. Existing notes or samples are not completion evidence.
-
-The supplied interpretation places quick vocabulary preparation in subjects 1 and 3 of an external Entra checklist, and deeper interview credit in subjects 4 and 5. Its “one day” estimate is a source opinion, not a proficiency guarantee. References to S03.03, Foundry trace 5.2 and 4.3 belong to that external planning material; they are retained here as unresolved cross-references, not equated with this README's section numbers. Link the actual merge and trace artifacts before marking those dependencies complete.
 
 ## Reading and scope
 
