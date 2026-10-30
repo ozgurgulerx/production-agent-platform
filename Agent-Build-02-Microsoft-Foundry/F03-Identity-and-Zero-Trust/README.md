@@ -11,8 +11,9 @@ Four routes through the same material; pick by what the next interview or build 
 | Route | Start | Then | Time |
 |---|---|---|---|
 | Learn the words | Sections 1–4 | Section 9, the interview lines and study checks under each section | Two evenings |
-| Build A3's identity layer | Section 12 micro-task ladder, M01–M28 | Each micro-task sits under the concept it proves | One command at a time |
+| Build A3's identity layer | Section 12 micro-task ladder, M01–M37 | Each micro-task sits under the concept it proves | One command at a time |
 | Build the standard scenarios | Section 16, five passes, S01–S26 | Coverage table maps each to sections and golden answers | An afternoon each |
+| Drill the cards | Search `MEMORISE ·` | Thirty-odd boxed cards, one or two per section, each a spoken answer in under thirty seconds | Ten minutes a day |
 | Pass the panel | Sections 5, 6, 8, 10 cold | Section 15 question bank, then the six golden answers aloud | The week before |
 
 ### Contents
@@ -20,21 +21,22 @@ Four routes through the same material; pick by what the next interview or build 
 | # | Section | One line |
 |---|---|---|
 | 1 | Who is calling | The Entra object chain: what holds a credential, what holds an assignment |
-| 2 | What the token says | Access, ID and refresh tokens; the claims; the validation order |
-| 3 | Grants and consent | Which grant for which agent situation; delegated vs application; consent in a bank |
+| 2 | What the token says | Access, ID and refresh tokens; the claims; the validation order; lifetimes and CAE |
+| 3 | Grants and consent | Which grant for which agent situation; delegated vs application; consent policies and consent in a bank |
 | 4 | Keyless Azure from Python | Credential classes, the chain, scope strings, the three execution contexts |
-| 5 | The agent's own identity | Entra Agent ID, what Foundry provisions, the token exchange, six connection types |
-| 6 | Least privilege on the data planes | Role names, the A3 matrix, the denied run, permission-aware retrieval |
+| 5 | The agent's own identity | Entra Agent ID objects as Graph sees them, inheritance, the agent OBO protocol, researcher findings, six connection types, Agent 365 versus Agent ID |
+| 6 | Least privilege on the data planes | Role names, custom roles and ABAC, the A3 matrix, the denied run, native document-level access |
 | 7 | Delegation | On-behalf-of and the audience rule |
 | 8 | Entra as authorisation server | The MCP spec in Entra terms, granting tools, APIM, error shapes |
 | 9 | Signing the user in | OIDC and SAML, and why neither is a tool token |
 | 10 | Zero Trust | The planes with one Azure control each, the A3 component table, threats |
 | 11 | Diagnose failures | Symptoms, first checks, shortcuts to refuse |
-| 12 | Exercises and evidence | The micro-task ladder M01–M28 and the learner exercises |
+| 12 | Exercises and evidence | The micro-task ladder M01–M37 and the learner exercises |
 | 13 | Job-market map | What the adverts name and where it is taught |
-| 14 | Adjacent topics | Conditional Access, logs, Okta, External ID, AKS, certificates, Copilot Studio |
+| 14 | Adjacent topics | Conditional Access, authentication strengths, logs, Okta, guests and partner tenants, External ID, AKS, Global Secure Access, certificates, Copilot Studio |
 | 15 | Question bank | Forty questions panels ask, with the Azure answer points |
 | 16 | Scenarios | Twenty-six small projects that cover the subject |
+| 17 | Auth integration frictions | MCP auth against Entra, delegation across agents, platform churn, process and operations |
 | | End matter | One request end to end, twelve lines, what this is not, versions, reading |
 
 ### What we are trying to avoid
@@ -53,17 +55,21 @@ Four routes through the same material; pick by what the next interview or build 
 
 *GitHub MCP, May 2025.* A user connected an agent to the official GitHub MCP server with access to their account, which held a public and a private repository. An attacker filed an issue in the public repo containing a prompt injection. Asked to review open issues, the agent read the payload, pulled data from the private repo into context and opened a pull request in the public repo containing it, including the user's salary and relocation plan. Invariant's write-up stresses the flaw was not in the MCP server; the agent's reach exceeded the task. **The token's scope is the blast radius of the worst prompt the agent will ever read.** Source: [Invariant Labs, 26 May 2025](https://invariantlabs.ai/blog/mcp-github-vulnerability), read 30 October 2026.
 
+> **MEMORISE · The three incidents in one breath**
+>
+> Midnight Blizzard: an unused test app with an application permission is a standing grant nobody watches; audit app-only permissions by name. Storm-0558: a valid signature is not a valid token; issuer, key scope and audience are the check, and libraries must do it. GitHub MCP: the token's scope is the blast radius of the worst prompt the agent will ever read; narrow the identity, not the prompt.
+
 ### What the chapter covers
 
-The Entra object chain and what a token says (1–2); grants and consent (3); keyless Python and the three execution contexts (4); the agent's own identity in Foundry (5); least privilege on the data planes and the denied-access run (6); delegation and the OBO audience rule (7); Entra as authorisation server for the ticket MCP server (8); OIDC and SAML for sign-in (9); the Zero Trust planes as one table (10); diagnosis (11); exercises, evidence and the job-market map (12–13); the adjacent topics a panel may raise, from Conditional Access on workload identities to External ID and AKS Workload ID (14); a bank of the questions panels actually ask, with the Azure answer points for each (15); twenty-six standalone scenarios that cover the subject (16).
+The Entra object chain and what a token says (1–2); grants and consent (3); keyless Python and the three execution contexts (4); the agent's own identity in Foundry (5); least privilege on the data planes and the denied-access run (6); delegation and the OBO audience rule (7); Entra as authorisation server for the ticket MCP server (8); OIDC and SAML for sign-in (9); the Zero Trust planes as one table (10); diagnosis (11); exercises, evidence and the job-market map (12–13); the adjacent topics a panel may raise, from Conditional Access on workload identities to External ID and AKS Workload ID (14); a bank of the questions panels actually ask, with the Azure answer points for each (15); twenty-six standalone scenarios that cover the subject (16); the authentication and authorisation frictions that stall real deployments and what to decide before the first server (17).
 
 ### What you have at the end
 
-Four diagrams you can redraw blind, a role-name table, a least-privilege matrix for A3, six golden answers in skeleton, twenty-eight micro-tasks that build the A3 identity layer one command at a time (Section 12), and twenty-six standalone scenarios in plain domains that cover every section, golden answer and micro-task (Section 16). The runs, not the prose, are the evidence.
+Four diagrams you can redraw blind, a role-name table, a least-privilege matrix for A3, six golden answers in skeleton, thirty-seven micro-tasks that build the A3 identity layer one command at a time (Section 12), and twenty-six standalone scenarios in plain domains that cover every section, golden answer and micro-task (Section 16). The runs, not the prose, are the evidence.
 
 ### How the micro-tasks work
 
-Twenty-eight micro-tasks, `M01` to `M28`, sit in the text where their concept appears and are indexed in Section 12. Each is five lines: prerequisite, do, expect, proof, and an **EC** time, the minutes in which you should be able to reproduce it from memory, eyes closed, once it has been done once. Do them in order; each builds on the last and all of them together are the A3 identity layer. Use one throwaway resource group (`rg-f03`) and the ticket API from S03.03 as the protected resource. CLI flags are from general knowledge and preview surfaces move: run `az <command> --help` before each, and treat a flag that has moved as a note for the study log, not a blocker. Never paste a token into a chat, a ticket or a website; the decoder sketch reads stdin for that reason.
+Thirty-seven micro-tasks, `M01` to `M37`, sit in the text where their concept appears and are indexed in Section 12. Each is five lines: prerequisite, do, expect, proof, and an **EC** time, the minutes in which you should be able to reproduce it from memory, eyes closed, once it has been done once. Do them in order; each builds on the last and all of them together are the A3 identity layer. Use one throwaway resource group (`rg-f03`) and the ticket API from S03.03 as the protected resource. CLI flags are from general knowledge and preview surfaces move: run `az <command> --help` before each, and treat a flag that has moved as a note for the study log, not a blocker. Never paste a token into a chat, a ticket or a website; the decoder sketch reads stdin for that reason.
 
 ## 1. Who is calling: the Entra object chain
 
@@ -141,6 +147,10 @@ A federated credential is a trust rule on an app registration or blueprint: "acc
 
 *Where it goes wrong.* A wildcard subject on the federated credential; a user-assigned managed identity shared by six services "to save time", so a compromise of any one is a compromise of all; a `ClientSecretCredential` in a `.env` file that outlives the pilot.
 
+> **MEMORISE · The object chain**
+>
+> App registration defines the application and holds its credential configuration; the service principal is that application inside one tenant and is what role assignments and consent grants attach to. A managed identity is a service principal whose credential Azure holds; an agent identity is a special service principal whose credential the blueprint holds. Federated credentials swap an external token (GitHub, AKS) for one of ours by issuer and subject. Credentials prove; assignments permit; they never live on the same object.
+
 **Interview line.** "App registration defines it, service principal is it in your tenant, managed identity means Azure holds its credential, agent identity means the blueprint does; roles and consent attach to the principal, never to the registration."
 
 **Study check.** Which object do you pass to `az role assignment create --assignee-object-id` for a Foundry agent, and why not the blueprint? **Answer.** The agent identity's object ID: it is the service principal that presents tokens to the resource. The blueprint holds the credential and impersonates the identity; it is not the actor the resource sees.
@@ -214,6 +224,20 @@ Do not use an ID token as an API access token. Do not read an unvalidated token 
 
 Steps 1–5 are authentication middleware; step 6 is your code. Storm-0558 was a failure at step 2 with step 1 passing.
 
+> **MEMORISE · What the token says**
+>
+> Three tokens: access (for the API in `aud`), ID (for the client, says who signed in), refresh (for the token endpoint). Validate in order: signature via JWKS, `iss` and `tid`, `aud`, `exp`/`nbf`, then `scp` (delegated, space-separated) or `roles` (app-only, array), then your own business check. `oid` is the caller in the tenant, `azp` the client app. Decoding is not validating; validating is not authorising.
+
+### Lifetimes, revocation and CAE
+
+An access token's default lifetime is "a random value ranging between 60-90 minutes (75 minutes on average)"; refresh and session token lifetimes "are no longer configurable through token lifetime policies" since January 2021. An access-token lifetime policy can set `AccessTokenLifetime` between ten minutes and a day, through Graph or PowerShell only, and "controls the lifetime of access tokens, ID tokens, and SAML2 tokens"; it does not apply to managed identity service principals. To control how often people re-authenticate, use Conditional Access sign-in frequency. With Continuous Access Evaluation, when client and resource both support it, "the token lifetime may be automatically extended to 24-28 hours" and revoked in near real time on critical events ([configurable token lifetimes](https://learn.microsoft.com/en-us/entra/identity-platform/configurable-token-lifetimes), read 30 October 2026). The consequence for agents: an app-only token is valid until `exp` whatever you do to the role assignment; plan revocation as "takes effect within the lifetime", measure it (M19), and shorten the lifetime for the ticket API if the business needs faster. Proof-of-possession and token binding, which tie a token to the client that holds it, are not in this design; mention them as the answer to "what if the bearer token is stolen" and mark them general knowledge.
+
+*Micro-task M29 · a shorter token for the ticket API.* Prereq: M02, Graph PowerShell with `Policy.ReadWrite.ApplicationConfiguration`. Do: `New-MgPolicyTokenLifetimePolicy` with `AccessTokenLifetime` `00:15:00`, link it to the ticket API's application with `New-MgApplicationTokenLifetimePolicyByRef`, acquire a token (M07) and read `exp - iat`. Expect: 900 seconds instead of roughly 4,500. Proof: the two decoded lifetimes; the sentence "this does not apply to the managed identity's own tokens." EC: 3 min.
+
+> **MEMORISE · Lifetimes and revocation**
+>
+> Access tokens live 60 to 90 minutes by default; a token lifetime policy can set 10 minutes to a day for an app, not for managed identities; refresh lifetimes are no longer configurable, sign-in frequency does that job. CAE can stretch tokens to 24 to 28 hours and revoke them in near real time where client and resource support it, which excludes managed identities today. Removing a role takes effect at token expiry; measure the delay and say it in the runbook.
+
 **Interview line.** "Signature says Entra signed it; audience says it was signed for me; scope or role says what it may do; my code says whether it may do it to this record."
 
 **Study check.** A correctly signed, unexpired token arrives at the ticket server with `aud` = Microsoft Graph and `scp` containing `tickets.read`. Permit or deny? **Answer.** Deny with `401`. The audience is wrong, so nothing after step 3 is evaluated; the scope value is irrelevant.
@@ -249,6 +273,12 @@ Most banks disable user consent entirely, so every delegated scope your tool nee
 
 *When not to.* Do not add `offline_access` to a daemon or an agent's own identity; app-only flows do not use refresh tokens, and offline consent to unknown apps was one of Midnight Blizzard's detection signals.
 
+### App consent policies: what users may consent to at all
+
+Tenant policy decides whether Ayşe can consent to anything before any individual permission is discussed. App consent policies "control what apps users can consent to"; the built-ins include `microsoft-user-default-low` (low-risk permissions for member users), `microsoft-user-default-recommended` (Microsoft-managed and updated with its current recommendations) and `microsoft-user-default-allow-consent-apps`; they "can't be edited", and a custom policy is built from include and exclude condition sets, for example delegated permissions classified `low` from verified publishers only, with a resource API excluded. Policies are created with `New-MgPolicyPermissionGrantPolicy` and attached to a custom role; deleted ones cannot be restored ([manage app consent policies](https://learn.microsoft.com/en-us/entra/identity/enterprise-apps/manage-app-consent-policies), read 30 October 2026). For the agent design this means: find out which policy the tenant runs before promising a consent experience, classify your API's scopes so the low ones can flow, and route everything else to the admin-consent workflow.
+
+*Micro-task M30 · read the tenant's consent policy.* Prereq: Graph PowerShell with `Policy.ReadWrite.PermissionGrant`. Do: `Get-MgPolicyPermissionGrantPolicy | ft Id, DisplayName`; read the includes of the one the tenant's user-consent setting points at; then in a sandbox tenant create `my-low-policy` with one include (delegated, `low`, verified publishers only). Expect: you can say which of your API's scopes a user could consent to under each policy. Proof: the include list and the sentence per scope. EC: 3 min.
+
 *Micro-task M06 · admin consent to the API.* Prereq: M02, a client app registration for the web UI (`ticket-ui`) with `tickets.read` and `tickets.refund` added under API permissions. Do: `az ad app permission admin-consent --id <uiAppId>`; then `az ad app permission list-grants --id <uiAppId>` (or Graph `oauth2PermissionGrants`). Expect: a grant record with `consentType: AllPrincipals` and the scope string. Proof: the grant record, redacted; the sentence "a configured permission is not a grant; this record is." EC: 2 min.
 
 *Micro-task M07 · an app-only token carries `roles`.* Prereq: M02, a test client registration with a secret (tests only). Do: assign `Tickets.Read` to the test client's service principal (M08 shows how), then `curl -X POST https://login.microsoftonline.com/<tenant>/oauth2/v2.0/token -d grant_type=client_credentials -d client_id=... -d client_secret=... -d scope=api://ticket-api/.default`; pipe the token into the decoder. Expect: `roles: ["Tickets.Read"]`, no `scp`, `aud` = your API. Proof: the decoded claim table in the log; delete the secret afterwards and say why it existed at all. EC: 3 min.
@@ -262,6 +292,10 @@ Choose the Graph endpoint first, then its least-privileged supported permission.
 **Application access** uses the app's own authority without a signed-in user and requires administrator consent for Graph application permissions. Record the tenant, client service principal, resource API, exact permission and consent grant. Use resource-specific restrictions where the chosen API supports them. Request a Graph token through the appropriate flow; do not forward the MCP API's incoming token to Graph or silently switch a denied delegated call to app-only.
 
 Evidence: show the redacted grant record, an allowed request and a denied request. A configured permission on an app registration is not evidence that consent was granted. Deep dives remain in [F11](../F11-Copilot-Studio-and-M365-Boundary/README.md). Sources: [Graph permissions](https://learn.microsoft.com/en-us/graph/permissions-overview) and [Entra consent](https://learn.microsoft.com/en-us/entra/identity-platform/permissions-consent-overview), local sections **Delegated access** and **Consent**.
+
+> **MEMORISE · Grants and consent**
+>
+> Auth code with PKCE for a person in a browser, client credentials for an app or agent acting alone, OBO to carry the person to the next API, device code for a CLI, refresh to avoid re-prompting; implicit is gone. Delegated scope equals the app's grant intersected with the user's rights and lands in `scp`; application permission equals the app's own standing authority, needs admin consent, lands in `roles`. In a bank user consent is off, so request `.default` once, justify each permission by name, and treat every new scope as a change ticket. A configured permission is not a grant; the grant record is.
 
 **Interview line.** "Delegated means the user's authority narrowed by the app's grant; application means the app's own authority, admin-consented, no user in the loop; a bank will make you justify every application permission by name."
 
@@ -308,6 +342,10 @@ Credential chains are convenient during development but can conceal which identi
 
 *Micro-example.* The ticket server works on your Mac against a dev index because `AzureCliCredential` is you, and you are Owner. In Container Apps the same code runs as a user-assigned managed identity with no role on the index; the first query returns `403` from Search. The fix is a `Search Index Data Reader` assignment on the index, not a key in Key Vault.
 
+> **MEMORISE · Keyless, pinned, explicit**
+>
+> Managed identity in the runtime, workload identity federation in CI, the CLI on the laptop, a certificate only where an app registration must authenticate itself, a client secret only in tests. `DefaultAzureCredential` is for getting started: it walks ten credentials in order, a host environment variable can change which one wins, and Microsoft says to replace it with a specific credential once deployed; if it stays, pin it with `AZURE_TOKEN_CREDENTIALS=prod`. A scope is the audience plus `/.default`; feed the OpenAI client a bearer-token provider so it refreshes and never sees a key. Keys off on the resource makes the rule enforceable.
+
 **Interview line.** "Managed identity in the runtime, workload identity federation in CI, the CLI on my laptop, and I can tell you which one made any given call because the chain is pinned."
 
 **Study check.** Why does a working `DefaultAzureCredential` on a developer machine prove nothing about production authorisation? **Answer.** It resolved to the developer's own identity, which usually holds broader roles than the runtime principal; a passing call tells you the developer is allowed, not that the managed identity is.
@@ -323,7 +361,8 @@ This is the section a Foundry panel scores. The question behind every variant is
 | Object | What it is | Holds credentials? | Receives permissions? |
 |---|---|---|---|
 | Agent identity blueprint | Template and parent for agent identities of one kind; "establishes the kind of agent" | Yes: federated credential, certificate or secret | Governs its identities; CA and admin actions target the kind |
-| Agent identity | "A special service principal in Microsoft Entra ID", created under a blueprint, which the blueprint "is authorized to impersonate" | No | Yes: RBAC, data-plane roles, app roles |
+| Blueprint principal | The blueprint's service principal in a tenant; the object that is consented to, the Conditional Access enforcement point, and the object that "is always able to create new child agent identities" | No (the credential is on the blueprint application object) | Receives the consent grants that identities inherit |
+| Agent identity | "A special service principal in Microsoft Entra ID", created under a blueprint, which the blueprint "is authorized to impersonate" | No; client secrets on an agent identity are blocked | Yes: RBAC, data-plane roles, app roles, allowed Entra roles |
 | Agent's user account (optional) | A user object decorated as an AI agent, 1:1 with an agent identity, for scenarios that need a user | No | As a user |
 | Sponsor | The human user or group accountable for the agent, recorded on the identity | n/a | n/a |
 
@@ -353,6 +392,62 @@ sequenceDiagram
 
 What to notice: two round trips to Entra before the tool sees anything, no secret in the project or the agent code, and the resource "checks the agent identity's RBAC role assignments before granting or denying access." Authentication to the resource does not itself grant access.
 
+### The objects as Graph sees them
+
+Foundry hides this, a panel does not. The four objects are created with Graph beta calls, and knowing the shape is how you read a tenant you did not build ([Solbakken, 2 February 2026](https://goodworkaround.com/2026/02/02/digging-deep-into-entra-agent-identities/), read 30 October 2026; object names are preview-era):
+
+| Object | Graph creation | Notes |
+|---|---|---|
+| Agent identity blueprint | `POST /beta/applications` with `@odata.type: Microsoft.Graph.AgentIdentityBlueprint` | An application object; identifier URIs, scopes and credentials live here; `AgentIdentity.CreateAsManager` is auto-consented |
+| Blueprint principal | `POST /beta/servicePrincipals/graph.agentIdentityBlueprintPrincipal` with the blueprint's `appId` | The tenant-local principal; consent and Conditional Access attach here |
+| Agent identity | `POST /beta/servicePrincipals/Microsoft.Graph.AgentIdentity` with `agentIdentityBlueprintId`, `displayName`, `sponsors@odata.bind` | A sponsor is required; no credential can be added |
+| Agent user | `POST /beta/users` with `@odata.type: microsoft.graph.agentUser` and `identityParentId` | Optional, 1:1 with an identity, no password, no interactive sign-in; needs `AgentIdUser.ReadWrite.IdentityParentedBy` on the blueprint |
+
+Enumerate with `GET /beta/applications/microsoft.graph.agentIdentityBlueprint` and `GET /beta/servicePrincipals/microsoft.graph.agentIdentity`. One blueprint can parent many identities with different permissions; in the vendor pattern the blueprint lives in the vendor's tenant and the principal and identities in each customer tenant.
+
+*Micro-task M35 · read the objects Foundry made.* Prereq: M11, Graph Explorer or `az rest` with directory read. Do: list blueprints and agent identities with the two `GET`s above; for the refund agent, read its `agentIdentityBlueprintId`, its sponsors, and the blueprint's `identifierUris`, `oauth2PermissionScopes` and credentials; try to add a password credential to the agent identity. Expect: a complete parent-child picture; the credential add on the identity is refused. Proof: the four object IDs in the study log and the refusal text. EC: 3 min.
+
+### How a permission reaches the identity
+
+Two layers, and confusing them produces `Insufficient privileges` with a token that looks fine ([van der Woude, 24 March 2026](https://derkvanderwoude.medium.com/from-blueprint-to-token-how-entra-agent-identity-inheritance-really-works-fed114abe281); [Authorization in Agent ID](https://learn.microsoft.com/en-us/entra/agent-id/authorization-agent-id), 12 June 2026; both read 30 October 2026). **Delegated scopes are inherited:** the blueprint application lists them in `inheritablePermissions` and an administrator consents to them on the blueprint principal; agent identities "inherit scopes from their parent blueprint during token issuance", so the identity's own permissions view is empty by design and inheritance "works only within tenant boundaries." **Application permissions and role assignments are direct:** `roles` must be granted to the agent identity itself; blueprints cannot hold Azure RBAC. Protocol configuration (identifier URIs, scope definitions, grant types) always flows down. Tokens carry permissions "baked in at issuance time", so a change needs a fresh token. The blueprint's app ID appears in the resulting token as `xms_par_app_azp`, which is how you prove the chain in a trace.
+
+Microsoft blocks the most dangerous grants outright: `Application.ReadWrite.All`, `RoleManagement.ReadWrite.All`, `User.ReadWrite.All` and `Directory.AccessAsUser.All` cannot be consented to an agent, "even an administrator can't"; Global Administrator, Privileged Role Administrator and User Administrator cannot be assigned; agent identities "can't be members of role-assignable groups"; lower roles such as Security Reader, Global Reader and AI Administrator, custom roles, Azure roles, access packages and ordinary groups remain available. The stated principle: "Agents can only do what a regular user could consent to, or what an administrator explicitly grants in a controlled, scoped manner."
+
+*Micro-task M36 · inherited versus direct.* Prereq: M35, a sandbox tenant. Do: add `User.Read` to the blueprint's `inheritablePermissions` and consent on the blueprint principal; grant `Tickets.Read` directly to the agent identity; acquire a user-context token and an app-only token for the identity; decode both. Expect: `scp: User.Read` in the delegated token though the identity shows no permission of its own; `roles: ["Tickets.Read"]` in the app-only token; `xms_par_app_azp` equals the blueprint app ID in both. Proof: the two decoded claim tables. EC: 4 min.
+
+### The agent on-behalf-of flow, exactly
+
+The user-delegation connection type in the table below runs this protocol ([agent OBO flow](https://learn.microsoft.com/en-us/entra/agent-id/agent-on-behalf-of-oauth-flow), updated 10 August 2026, read 30 October 2026). Three tokens: `Tc`, the user's token, whose `aud` must be the blueprint; `T1`, the exchange token the blueprint obtains for one child identity; `TR`, the resource token.
+
+1. The client authenticates the user and sends `Tc` to the blueprint.
+2. The blueprint presents its credential, ideally a federated credential obtained through a managed identity, with `client_id=<blueprint>`, `scope=api://AzureADTokenExchange/.default`, `grant_type=client_credentials` and `fmi_path=<agent identity app ID>`, "which child agent identity the blueprint is impersonating", and receives `T1`.
+3. The agent identity exchanges: `client_id=<agent identity>` (it switches here, because the identity performs the OBO), `client_assertion=T1`, `assertion=Tc`, `grant_type=jwt-bearer`, `requested_token_use=on_behalf_of`, `scope=<resource>/scope`.
+4. Entra validates `Tc.aud == blueprint` (a Graph-audience token "is rejected with `AADSTS50013`"), `T1.azp == blueprint`, and that `T1.sub` resolves to the child performing the exchange, then issues `TR`.
+
+Constraints to say aloud: blueprints and identities "can't initiate interactive authorization (`/authorize`) flows"; supported grants are `client_credential`, `jwt-bearer` and `refresh_token`; a child identity cannot receive interactive consent (`AADSTS82014`), so delegated permissions are pre-authorised on the blueprint through inheritable permissions and admin consent; "client secrets shouldn't be used as client credentials in production environments for agent identity blueprints"; a refresh token with a fresh `T1` serves background continuation. Foundry runs all of this for you under the agent identity and user-delegation connection types; you still need the diagram when the panel asks what the platform is doing.
+
+### Hardening: what the researchers found
+
+Independent testing in 2026 turned the object model into an attack surface map; the findings below are the ones a security architect on the panel will know ([Compass Security, 9 June 2026](https://blog.compass-security.com/2026/06/entra-agent-id-from-a-security-perspective/); [cy5, 19 October 2026](https://cy5.io/blog/entra-agent-id/); [Merill Fernando, 14 August 2026](https://merill.net/2026/08/entra-agent-users-dynamic-groups/); all read 30 October 2026).
+
+| Finding | Why it matters | Control |
+|---|---|---|
+| "Credentials are configured only on the blueprint itself"; "a compromise of the blueprint credentials may therefore affect all child agent identities" | One secret, many agents; multitenant blueprints extend it across tenants | Federated credential through a managed identity, never a secret; one blueprint per kind of agent, not per team |
+| Blueprint owners can add credentials and so impersonate every child | Ownership is a privilege boundary, like a privileged app registration | Owners are a Tier-0 group; treat Agent ID Administrator, AI Administrator and `AgentIdentityBlueprint.AddRemoveCreds.All` / `ReadWrite.All` holders as highly privileged |
+| Of 1,041 permissions tested, 944 could be granted; `Application.ReadUpdate.All` was allowed and still lets an agent add credentials to app registrations; Exchange Administrator was assignable; no Azure RBAC restriction, so `Owner` could be assigned | Microsoft's block list is a floor, not a policy | Your own allow list of permissions and roles for agents, enforced in the matrix and by access reviews; never an Azure `Owner` or `User Access Administrator` on an agent |
+| Inherited permissions do not appear when enumerating the identity through Graph | Effective permissions need the blueprint, the principal's grants and the identity's direct grants read together | M36 as a routine; EntraFalcon's Agent ID checks (general knowledge, verify the tool's current state) |
+| A consent-phished multitenant blueprint yields a principal that "is always able to create new child agent identities" in the victim tenant | Consent phishing now mints agents | Verify publisher, purpose and requested permissions before consenting to a foreign blueprint; monitor agent identity creation |
+| Sponsors "had no technical control over objects other than adding more sponsors" | Sponsorship is accountability, not control | Pair the sponsor with an owner group that has control and with access-package expiry |
+| Agent users match user-based dynamic group rules written before they existed | A broad rule hands an agent user licences, app assignments, Teams and SharePoint access | Append `-and (user.agentIdentityBlueprintId -eq null)` to broad rules (unquoted `null`; the empty string matches nobody); `user.identityParentId -ne null` finds agent users |
+| Agents on plain service principals, managed identities or API keys are invisible as agents; "using a key is not an Entra sign-in, so it does not appear in sign-in logs at all"; behind an MCP server "the downstream API sees the server's credentials, not the agent's" | The registry only governs what is registered | `disableLocalAuth` everywhere; migrate custom agents onto agent identities; make MCP servers carry the agent's identity downstream or log it |
+| Portal sign-in and audit retention is 7 to 30 days by licence; Graph activity logs are off by default | The evidence you promised the auditor is not being kept | Diagnostic settings for `AuditLogs`, `AADServicePrincipalSignInLogs`, `AADManagedIdentitySignInLogs` and Graph activity logs to Log Analytics with a retention you chose |
+
+*Micro-task M37 · the three checks an auditor runs.* Prereq: M35, directory read. Do: list owners of every blueprint and compare against your Tier-0 group; list every dynamic group whose rule lacks the agent-user exclusion and evaluate one agent user against it with the `evaluateDynamicMembership` API; list role assignments and app-role assignments held by agent identities and flag anything outside your allow list. Expect: three short lists, ideally empty. Proof: the three queries and their counts in the study log. EC: 5 min.
+
+> **MEMORISE · Entra Agent ID in Foundry**
+>
+> The blueprint is an application object: the template, the credential holder (for Foundry, a federated credential trusting the Agent Service provider, so no secret exists anywhere) and the place delegated permissions are declared inheritable. The blueprint principal is its service principal in the tenant: where consent lands, where Conditional Access enforces, and the object that can always create child identities. The agent identity is a special service principal with no credential that the blueprint impersonates through `fmi_path`; it inherits delegated scopes at token issuance and holds application roles and Azure roles directly. A sponsor is the accountable human. Creating an agent provisions its own blueprint and identity; a project-level shared pair exists for legacy agents; nothing is granted downstream until you grant it. At runtime Agent Service presents the blueprint credential, receives an agent-identity token, exchanges it for an audience-scoped token, and the tool validates that and checks the agent's grants. Hosted-agent code gets the agent instance's identity from the token service; the project managed identity is not available to it.
+
 ### Six ways a tool connection can authenticate
 
 Foundry's MCP connection types are the three-options question in product form. `--auth-type` values are from the `azd ai connection create` examples on the [MCP authentication page](https://learn.microsoft.com/en-us/azure/foundry/agents/how-to/mcp-authentication), read 30 October 2026; the page does not show CLI values for the others.
@@ -380,6 +475,10 @@ Consent for passthrough arrives as an `oauth_consent_request` output item with a
 
 *Micro-example.* Three agents share a project. Under project managed identity, the refund agent, the FAQ agent and the triage agent all present the same `oid` to the ticket server, so the server cannot grant `Refunds.Execute` to one without granting it to all. Under agent identity, you assign `Tickets.Read` to all three identities and `Refunds.Execute` to the refund agent only; the triage agent's `issue_refund` call returns `403` and the trace names the agent.
 
+> **MEMORISE · Three answers at the tool boundary**
+>
+> The agent's own identity when the work is autonomous and the audit line should name the agent; the user's delegated identity when the result must respect what that person may see, with consent designed in; the project managed identity never past a prototype, because every agent in the project shares one audit line and one permission set. Passthrough OAuth is for third-party tools with their own identity provider, consent per user per connection; keys are for vendors that take nothing else, and they live in Key Vault with an owner.
+
 ### Prototype to production
 
 The shared project identity is the prototype path; a per-agent identity is the production path; publishing and migration are where identities change and role assignments must be re-made. The sentence for the panel: "Each agent has its own blueprint and identity from creation; the shared project identity is for legacy agents, and nothing I ship uses it."
@@ -390,7 +489,38 @@ The shared project identity is the prototype path; a per-agent identity is the p
 
 Record a sponsor on every identity; it is who gets called at 3 a.m. Blueprints let an administrator act on a kind of agent at once: "Disable all Sales Assistant agents", "Revoke a permission grant for all Sales Assistant agents", "Apply a conditional access policy to all Sales Assistant Agents." Add access reviews on the agent identities' role assignments at the same cadence as service accounts, and plan deletion in order (identity, then blueprint) so no orphaned assignments remain. Which Conditional Access conditions apply to non-human identities, and the licensing for workload-identity policies, are from general knowledge; verify before promising them to a client.
 
+**Entra ID Governance for agents** is how the sponsor model becomes enforceable. Agent identities get access through access packages: "agents can request an access package for own agent IDs, or have their owner or sponsor request one on their behalf"; resources include group memberships, OAuth API permissions and Entra roles; the assignment policy selects "For users, service principals, and agent identities in your directory" and then "All agents". The sponsor is "a human user accountable for making decisions about its lifecycle and access"; "if the sponsor is leaving the organization, sponsorship of the agent identities is automatically transferred to their manager"; as an assignment's end date approaches the sponsor is notified, and if nothing is done "the access package assignment automatically expires on its end date, and the agent identity loses access." Lifecycle workflows notify co-sponsors and managers of sponsorship changes. Licensing: Microsoft 365 E7, or an Agent 365 licence paired with at least Entra P1 or Microsoft 365 E3 ([governing agent identities](https://learn.microsoft.com/en-us/entra/id-governance/agent-id-governance-overview), read 30 October 2026). The design consequence: grant the agent's app roles through an access package with an end date rather than a bare assignment, so expiry and re-attestation are the default and the sponsor is the approver of record.
+
+*Micro-task M31 · an access package for the agent.* Prereq: M11, ID Governance licensing in a sandbox tenant. Do: create a catalogue containing the ticket API; an access package granting `Tickets.Read`; an assignment policy for "All agents" with a 30-day end date and the agent's sponsor as approver; assign the refund agent's identity. Expect: the app-role assignment appears with the package as its source; the sponsor receives the expiry notice. Proof: the assignment and its end date; after expiry (or manual removal) the M14 denied run. EC: 4 min.
+
 **Microsoft Agent 365** is the control plane above the identity: observe (a central registry of agents, adoption, activity and health), govern (lifecycle, access control and compliance through the Microsoft 365 admin centre, Entra and Purview), secure (Entra risk-based access, Purview data risk, Defender threat detection that can "block unsafe behaviors and malicious activity"). Generally available since 1 May 2026, licensed per user, with Microsoft 365 E5 as the recommended prerequisite ([Agent 365 overview](https://learn.microsoft.com/en-us/microsoft-agent-365/overview), read 30 October 2026). How Foundry, Copilot Studio and third-party agents each appear in the registry is not on that page; verify before stating it. The 60-second answer to "forty agents from three teams and a vendor": every agent has an Entra identity with a sponsor, the registry is the inventory, Purview and Defender are the data and threat lenses, and switching one off is a blueprint-level action.
+
+### Agent 365 versus Entra Agent ID
+
+Two products, one layering, and panels confuse them. **Entra Agent ID is the identity foundation; Microsoft Agent 365 is the control plane built on it.** Microsoft's own words: Agent 365 is "the enterprise control plane for managing and governing AI agents at scale. Built on the identity foundation of Microsoft Entra" and "Microsoft Entra Agent ID provides the identity foundation for Agent 365" ([Entra Agent ID hub](https://learn.microsoft.com/en-us/entra/agent-id/), dated 19 June 2026; [Agent 365 overview](https://learn.microsoft.com/en-us/microsoft-agent-365/overview), read 30 October 2026).
+
+| Question | Entra Agent ID | Microsoft Agent 365 |
+|---|---|---|
+| What is it | An identity type and its governance in Entra: blueprints, agent identities, owners and sponsors, Conditional Access and ID Protection for agents, ID Governance access packages, network controls through Global Secure Access | A product that observes, governs and secures the fleet of agents through a central registry, the Microsoft 365 admin centre, Entra, Purview and Defender |
+| Unit it manages | One agent identity (a service principal) and the blueprint that governs a kind | The agent as a business object: adoption, activity, health, owner, data risk, threat posture |
+| Where you touch it | Entra admin centre, Graph, `az`, Foundry provisioning | Microsoft 365 admin centre registry, with Entra, Purview and Defender behind it |
+| What it decides | Whether this agent can get a token, for which audience, under which policy | Whether this agent should exist, who owns it, what data it touches, whether to block it |
+| Who uses it | The platform and identity engineer; you, when you design the agent | The CIO's office, security operations, compliance |
+| Does Foundry need it | Yes: every Foundry agent gets a blueprint and identity whether or not you look | No: a Foundry agent runs without Agent 365; it becomes visible and governable with it |
+| Licensing | No licence noted on the hub page; Conditional Access for workload identities needs Workload Identities Premium | Per user, GA 1 May 2026, Microsoft 365 E5 recommended as the prerequisite |
+| Evidence it gives an auditor | Sign-in and agent activity logs, role and app-role assignments, access-review records | A fleet inventory, data-risk and threat findings per agent, lifecycle records |
+
+*Micro-example.* The refund agent misbehaves on Tuesday. With Agent ID alone you find its identity, read its sign-in log, revoke its app role or disable the blueprint's kind; you knew where to look because you built it. With Agent 365 the security operations team, who never saw your design, finds the agent in the registry by owner, sees Purview flag the customer data it touched and Defender flag the unusual calls, and blocks it from the admin centre; the revocation underneath is still an Entra action on the same identity.
+
+*Where it goes wrong.* Saying "Agent 365 gives agents identities" (it does not; Entra does); promising registry visibility for an agent that has no Entra identity (a vendor agent on a shared key is invisible to both); treating Agent 365 as a substitute for least privilege (the registry tells you an over-privileged agent exists; the role assignment is still yours to fix). How Foundry, Copilot Studio and third-party agents each surface in the registry is not stated on the overview page; verify before describing it to a client.
+
+> **MEMORISE · Agent ID versus Agent 365**
+>
+> Entra Agent ID is the identity: blueprints, agent identities, sponsors, Conditional Access and ID Governance for agents. Microsoft Agent 365 is the control plane built on it: a registry to observe, admin-centre governance, Purview and Defender to secure, licensed per user, GA since May 2026. Agent 365 does not issue identities and does not narrow permissions; it tells the organisation an over-privileged agent exists, and Entra is where you fix it. Passport and border control.
+
+**Interview line.** "Agent ID is the passport, Agent 365 is border control: Entra issues and governs each agent's identity, Agent 365 gives the organisation one place to see, own, audit and switch off every agent that carries one."
+
+**Study check.** A client with Agent 365 asks why you still need a least-privilege matrix. **Answer.** Agent 365 inventories and monitors agents; it does not assign or narrow their permissions. The matrix is the Entra and Azure RBAC layer that decides what each identity may do; Agent 365 is how the organisation notices when that layer is wrong.
 
 **Interview line.** "The agent has its own Entra identity, created with the agent, with no credential of its own and no permissions until I grant them; the tool sees the agent, the audit log names the agent, and the shared project identity never leaves the prototype."
 
@@ -422,6 +552,16 @@ Control-plane roles (`Owner`, `Contributor`, `Reader`) manage the resource; data
 | Cosmos DB | Built-in data-plane roles (`Cosmos DB Built-in Data Reader`) | Data access; not Azure RBAC in the portal | Control plane; general knowledge, verify |
 
 Three traps. `Contributor` on an Azure OpenAI resource cannot call the model with Entra ID; it can read the keys, which is worse. Indexers run with service credentials, so a per-index role does not restrict them. AI Search denies every role-based request until the service's authentication option is set to `Both` or `Role-based access control`, and a request carrying an API key wins over the token.
+
+> **MEMORISE · Role names a panel expects**
+>
+> Azure OpenAI: `Cognitive Services OpenAI User` to infer with Entra, `Contributor` variants to manage, and `Cognitive Services Contributor` reads keys but cannot infer. Foundry: `Agent Consumer` to call, `User` to build, `Project Manager` to publish and assign `User`, `Account Owner` and `Owner` above. Search: `Index Data Reader` to query, `Index Data Contributor` to load, `Service Contributor` to manage objects and read keys but not query. Storage `Blob Data Reader`; Key Vault `Secrets User`; Cosmos built-in data-plane roles. Control plane never implies data plane, and a key on the request beats the token.
+
+### Custom roles, deny assignments and ABAC conditions
+
+When a built-in role is too wide, three tools exist and panels test whether you know which is which. A **custom role** is a role definition with exactly the actions and data actions you list, assigned like any other; use it when `Search Index Data Reader` is right but you also need one control-plane read, never as a shortcut to `Contributor`. A **deny assignment** blocks actions even if a role grants them; you cannot author them directly, they come from Azure Blueprints and managed applications (general knowledge, verify). An **ABAC condition** on a role assignment "filters down permissions granted as a part of the role definition and role assignment" using principal, resource, request and environment attributes; today "conditions can be added to built-in or custom role assignments that have blob storage or queue storage data actions", and "you cannot explicitly deny access to specific resources using conditions" ([Azure ABAC overview](https://learn.microsoft.com/en-us/azure/role-based-access-control/conditions-overview), read 30 October 2026). For agents the useful case is a per-agent condition on `Storage Blob Data Reader`: read only blobs tagged `agent=refund` or under one container prefix, so one role definition serves many agents with different reach.
+
+*Micro-task M32 · a condition on the indexer's read.* Prereq: M03, a container with two blobs tagged `Project=Cascade` and `Project=Other`. Do: assign `Storage Blob Data Reader` to M03's identity with the condition from the ABAC page (read permitted only where the blob tag `Project` equals `Cascade`); read both blobs. Expect: one `200`, one `403`, same role, same scope. Proof: both responses and the condition text. EC: 4 min.
 
 ### The A3 matrix and the denied-access run
 
@@ -464,6 +604,16 @@ Design two users with different document access and one shared document. Test ea
 Do not accept group IDs from an arbitrary request field as proof of membership. Handle overage and permission resolution through an approved identity/data path. F07 owns the retrieval implementation and quality measurements; this module owns the security argument.
 
 Two mechanisms, do not confuse them: Azure RBAC decides whether a principal may query the index at all; document-level access control (security filters on a permissions field, or the native ACL feature) decides which documents that query may return ([Search RBAC](https://learn.microsoft.com/en-us/azure/search/search-security-rbac), read 30 October 2026; [document-level access](https://learn.microsoft.com/en-us/azure/search/search-document-level-access-overview)). Group IDs for the filter come from the validated token or a Graph lookup under the app's authority, never from a request field.
+
+### Native document-level access control
+
+Azure AI Search now carries permissions in the index and enforces them at query time, which removes the application-built filter for Microsoft-sourced content. Four options: **security filters** on a permissions field (generally available, API-agnostic, for custom identity systems and push indexes); **POSIX-like ACL and RBAC scopes** ingested from ADLS Gen2 and Blob (preview; Blob preserves scope at container level, ADLS at document level); **SharePoint in Microsoft 365 ACLs** extracted by the indexer (preview); and **Purview sensitivity labels** "stored as metadata and evaluated at query time to enforce user access based on Microsoft Entra tokens and Purview policy assignments" (preview, single-tenant, RBAC authentication, REST and SDK only, no user-assigned managed identity for label extraction). At query time the user's token travels in the `x-ms-query-source-authorization` header; the service first checks the caller's `Search Index Data Reader` role, then compares the user, group and scope claims in that token to the stored permission metadata, so "you don't need to implement nested group resolution, multilevel ACL traversal, or post-query trimming in your application." Limits to say aloud: permission changes appear only after the metadata is re-synchronised; SharePoint inherited changes need an explicit refresh; chunked indexes must project the label to each chunk ([document-level access](https://learn.microsoft.com/en-us/azure/search/search-document-level-access-overview), read 30 October 2026). Design rule: two identities on every query, the service's (role) and the user's (header); if the user's token is not available at the retrieval boundary, you are back to application filters from validated claims.
+
+*Micro-task M33 · the user's token on the query.* Prereq: M18, an index built from ADLS Gen2 with ACLs by the preview indexer, two users in different groups. Do: query as the retrieval identity with `x-ms-query-source-authorization: <user A token>` and again with user B's. Expect: different result sets from the same query and the same service identity. Proof: the two result counts and the document IDs that differ. EC: 3 min.
+
+> **MEMORISE · Permission-aware retrieval**
+>
+> The retrieval identity sees more than any user, so the model can never be the filter. Two identities on every query: the service's role to reach the index and the user's token in `x-ms-query-source-authorization` so Search trims to the user's groups, scopes and Purview labels at query time; where that token is not available, filter from validated claims in your own code, never from a request field. Partition caches per user; permission changes arrive when metadata re-syncs; test two users and one shared document and show zero leaks.
 
 **Interview line.** "Control plane and data plane are different roles, the shared retrieval identity sees more than any user, so the filter is derived from the validated caller and applied before the model sees a chunk; and I can show you the `403` from the run where I took the role away."
 
@@ -513,6 +663,10 @@ The rule that decides most OBO bugs: the incoming token "must have an audience (
 *Micro-task M21 · one OBO exchange, one rejection.* Prereq: M02 with the ticket API holding a certificate credential and Graph `User.Read` as a delegated permission (admin-consented); a user token for the ticket API from M06's client. Do: run the shape in [`sketches/obo_exchange.py`](sketches/obo_exchange.py) with `client_assertion` from the certificate and `downstream_scope=https://graph.microsoft.com/.default`; decode the result; then repeat with a Graph-audience token as the `assertion`. Expect: first, a Graph token with `scp: User.Read` whose subject is the user; second, an error whose description says the assertion audience does not match the client (`AADSTS50013`-class, verify). Proof: the decoded claim table and the error text. EC: 4 min.
 
 *When not to.* The nightly indexer, a reconciliation job, a health probe: workload-owned work with bounded authority uses the workload's identity. Choosing OBO there spreads a user's delegated authority into places no user is watching.
+
+> **MEMORISE · On-behalf-of in four lines**
+>
+> The middle tier redeems the token it received, whose `aud` must be itself, for a token to the next API as the same user: `grant_type=jwt-bearer`, `assertion=<incoming token>`, `requested_token_use=on_behalf_of`, `scope=<downstream>/.default`. Subject stays the user, actor becomes the middle tier, only delegated scopes travel, roles stay with the person. A Graph-audience token handed to you is rejected, not redeemed; a denied delegated call is reported, never retried as the app; a claims challenge downstream becomes a `401` to the client. Daemons use client credentials instead.
 
 **Interview line.** "OBO redeems a token whose audience is me for a token whose audience is the next API, as the same user; if the audience is not me I reject it, and if the user is denied I say so rather than retrying as the app."
 
@@ -608,6 +762,10 @@ Sources: [Foundry MCP authentication](https://learn.microsoft.com/en-us/azure/fo
 
 *Micro-task M22 · the server publishes its metadata.* Prereq: the F06 lab 04 server (or S03.03) configured with issuer `https://login.microsoftonline.com/<tenant>/v2.0`, audience `api://ticket-api`, JWKS from Entra's discovery document. Do: `curl -i https://<server>/mcp` with no token; `curl https://<server>/.well-known/oauth-protected-resource`. Expect: `401` with `WWW-Authenticate: Bearer resource_metadata="..."`, and a JSON document with `authorization_servers` and `scopes_supported: ["tickets.read","tickets.refund"]`. Proof: both responses pasted into the log. EC: 3 min.
 
+> **MEMORISE · Entra as authorisation server for MCP**
+>
+> The MCP server is the resource server, Entra the authorisation server, Foundry Agent Service the client. The server publishes protected-resource metadata pointing at Entra and listing its scopes, returns it in `WWW-Authenticate` on `401`, validates issuer, audience and expiry locally against Entra's keys, maps scopes or app roles to tools in code, answers `403 insufficient_scope` with the scope it wants, and never forwards the inbound token downstream. Entra does not do dynamic client registration, so clients are pre-registered; the audience is one identifier in the registration, the connection and the validator.
+
 ### APIM in front of the server
 
 Put APIM in front when you want a gateway-level audience check, per-caller rate limits and a single egress identity to the backend. `validate-azure-ad-token` takes `tenant-id` (required), `audiences`, `required-claims` with `match="all|any"` and a `separator` for multi-valued claims, `client-application-ids`, and `failed-validation-httpcode` (default `401`); the validated `Jwt` lands in `output-token-variable-name` for later policies ([policy reference](https://learn.microsoft.com/en-us/azure/api-management/validate-azure-ad-token-policy), read 30 October 2026). Use `required-claims` on `scp` or `roles` for the per-tool floor, `rate-limit-by-key` keyed on `oid` for fairness, and `authentication-managed-identity` for the hop to the backend; the latter two are from general knowledge, verify the pinned policy names. The backend still validates its own token and owns ticket entitlement: a gateway check that can be bypassed by reaching the backend's private endpoint directly is not a control.
@@ -649,6 +807,10 @@ The split matters because the model reads tool results and the host reads HTTP: 
 These are design choices for the examples, not a requirement to implement all three protocols in every application.
 
 *Micro-example.* The bank's case-management portal signs users in with SAML; the new ticket assistant is embedded in it. The assistant's own app registration uses OIDC with PKCE for Ayşe's session and requests `api://ticket-api/.default`; the SAML session never crosses into the API path.
+
+> **MEMORISE · OIDC, SAML, OAuth in one breath**
+>
+> OIDC is authentication on top of OAuth 2.0 and gives the app an ID token about the person; SAML does the same with a signed XML assertion and is what an older enterprise portal already speaks; OAuth is authorisation for APIs and says nothing about who the user is. Build with OIDC and PKCE, keep SAML where it exists, and never present an ID token or a SAML assertion as a bearer token to a tool.
 
 **Interview line.** "OIDC for anything I build, SAML only where a portal already speaks it, OAuth for every API call, and a sign-in token is never a tool token."
 
@@ -728,6 +890,10 @@ The identity controls above map onto the agent-specific threats a security archi
 | Standing privilege | A pilot app registration with `Mail.ReadWrite` application permission, unowned | Sponsor on every identity; access reviews; app-only permissions audited by name | Review record; Midnight Blizzard as the case |
 | Shared retrieval identity | Ayşe sees Mert's document in a citation | Document-level access control from validated claims; cache partition per user | Two-user run with denied documents absent |
 
+> **MEMORISE · Zero Trust in six planes**
+>
+> Identity: MFA and Conditional Access for people, managed and agent identities for workloads, PIM for administrators. Device: compliance for people, not for daemons. Network: private endpoints in, Firewall allow-list out, no public ingress except the one front door with a WAF. Application: APIM validates the token, the backend authorises the operation. Data: filters from the caller's claims, encryption with the client's key where required. Visibility: one correlation ID from sign-in to receipt, never a token in a log. Each plane has a control you can name and a denied run you can show.
+
 **Interview line.** "Identity: the agent's own, MFA and CA for people; device: compliance for people, not daemons; network: private endpoints in, Firewall out; application: APIM validates, the backend authorises; data: filters from the caller's claims; visibility: one correlation ID from sign-in to refund, and no token anywhere in it."
 
 **Study check.** The CISO says "no public endpoints and no keys." Which two rows of the component table do you point at first, and what remains? **Answer.** The network column (private endpoints, APIM internal, Front Door the only public face) and the identity columns (every hop a managed, agent or federated identity); what remains is one vendor key in Key Vault, with its rotation plan.
@@ -746,6 +912,10 @@ The identity controls above map onto the agent-specific threats a security archi
 | Token refresh failure | Credential lifetime, exchange errors and retry budget | Infinite retries or reusing expired tokens |
 
 HTTP codes alone are not a full diagnosis: services can surface policy/network failures differently. Record the resource, correlation ID, operation and safe error code. Never record the access token, client secret, full private prompt or unredacted retrieved content just to debug authentication.
+
+> **MEMORISE · Diagnosis without weakening**
+>
+> `401` is identity: missing, expired, wrong issuer or audience; `403` is permission: role, scope or entitlement. Never fix a `401` by disabling validation, a `403` by granting `Contributor`, a consent prompt by switching to application permissions, or a local-only success by copying developer credentials to the runtime. Log the resource, correlation ID, operation and error code; never the token.
 
 Entra error codes worth recognising on sight (codes from general knowledge, verify): `AADSTS65001` consent missing; `AADSTS700016` application not found in the tenant you addressed; `AADSTS50013` the OBO assertion is invalid or its audience is not you; `AADSTS70011` you mixed `.default` with named scopes; `interaction_required` the downstream resource wants a claims challenge, surface a `401`. From Foundry: `Cannot pass Microsoft token to untrusted MCP endpoint` means managed OAuth refused to send an Entra token to a server outside the trusted set, by design.
 
@@ -789,6 +959,15 @@ Do them in this order; each row names what it needs. **EC** is the eyes-closed r
 | M26 | Conditional Access blocks the agent by location | 14 | M11, licence | 4 |
 | M27 | Three KQL answers from the sign-in and audit logs | 14 | diagnostics | 5 |
 | M28 | AKS Workload ID: one pod, one identity | 14 | AKS | 5 |
+| M29 | Fifteen-minute tokens for the ticket API | 2 | M02 | 3 |
+| M30 | Read the tenant's app consent policy | 3 | Graph PowerShell | 3 |
+| M31 | Access package for the agent with an end date | 5 | M11, licence | 4 |
+| M32 | ABAC condition on the indexer's blob read | 6 | M03 | 4 |
+| M33 | The user's token on the Search query | 6 | M18, preview API | 3 |
+| M34 | Phishing-resistant MFA for approvers | 14 | sandbox tenant | 3 |
+| M35 | Read the Agent ID objects Foundry made | 5 | M11 | 3 |
+| M36 | Inherited versus direct permissions, decoded | 5 | M35 | 4 |
+| M37 | The three checks an auditor runs | 5 | M35 | 5 |
 
 Backbone: M01–M05 in one sitting (vocabulary made real), M06–M10 the next (consent and keyless), M22 before M12 (the server must speak Entra before the agent can call it), M11–M17 as one block (this is the interview credit), M18–M21 the data-plane and OBO runs, M23–M28 as the estate allows. CB120, the timed client, sits between M10 and M11 and is not a micro-task: it is the exam.
 
@@ -840,6 +1019,16 @@ Each of these sits one step outside the core design but enters it the moment the
 
 *Micro-example.* Policy blocks the refund agent's identity from outside the UK South service tag ranges. A replay of its token from a residential IP in another country fails at the token request, before the ticket server is reached; the service-principal sign-in log records the block. The managed identity on the ticket server is not covered, so its protection is the private endpoint, not CA.
 
+### Authentication strengths and passwordless for the people in the loop (E)
+
+*When.* The bank's policy says "phishing-resistant MFA for anyone who can approve a payment", and Mert approves refunds.
+
+*What to know.* An authentication strength "is a Microsoft Entra Conditional Access control that specifies which combinations of authentication methods users can use to access a resource." Three built-ins: MFA; passwordless MFA ("methods that satisfy MFA but don't require a password"); phishing-resistant MFA ("methods that require an interaction between the authentication method and the sign-in surface": FIDO2 security keys, Windows Hello for Business or platform credentials, multifactor certificate-based authentication). It is applied through the **Require authentication strength** grant control and cannot be combined with **Require multifactor authentication** in one policy; it is evaluated after the initial authentication ([authentication strengths](https://learn.microsoft.com/en-us/entra/identity/authentication/concept-authentication-strengths), footer dated 24 October 2025, read 30 October 2026). None of this applies to the agent's own identity; it applies to Ayşe and Mert, and through delegation it is what their tokens carry into the tool. Token protection, which binds a sign-in session to the device, is a further Conditional Access control; mark it general knowledge.
+
+*How.* One Conditional Access policy: users in the approvers group, the approval app as target resource, grant: require phishing-resistant MFA, report-only first. Evidence: Mert's sign-in log entry showing the strength satisfied; a password-plus-SMS sign-in denied.
+
+*Micro-task M34 · phishing-resistant approvers.* Prereq: a sandbox tenant with a FIDO2 key or Windows Hello enrolled for a test approver. Do: the policy above; sign in as the approver with the key, then with password plus Authenticator push. Expect: first succeeds, second is blocked with the authentication-strength reason. Proof: the two sign-in log entries. EC: 3 min.
+
 ### Sign-in logs and what the auditor reads (D)
 
 *When.* "Show me what the agent did last Tuesday" and "who approved that permission" both end in Entra's logs.
@@ -857,6 +1046,14 @@ Each of these sits one step outside the core design but enters it the moment the
 *What to know.* Entra stays the token issuer for everything Entra-protected: Azure resources, Foundry, your ticket API registered in the Entra tenant. The third-party IdP authenticates the user for a federated domain; Entra then issues the tokens, and Conditional Access still evaluates. Users must exist in Entra (synchronised or provisioned) for that to happen. Microsoft's page says only that a compatible federation solution can provide SSO and that Microsoft "no longer provides validation testing to independent identity providers" ([federation compatibility](https://learn.microsoft.com/en-us/entra/identity/hybrid/connect/how-to-connect-fed-compatibility), read 30 October 2026); the mechanics (SAML 2.0 or WS-Fed federated domain, SCIM provisioning into Entra) are from general knowledge, verify with the client's identity team. The trap: an Okta-issued access token is not accepted by a Foundry endpoint or by your Entra-registered API; the trust chain is Okta → Entra → token for your API.
 
 *How.* Nothing to build in the agent. Draw the trust chain for the panel: user → Okta (authn) → Entra (federated domain, CA, token issuance) → your app (OIDC) → agent → tool. If the client wants the ticket API to accept Okta tokens directly instead, that is a different design (your API trusts two issuers) and Foundry's managed OAuth will not mint those tokens for you; say so.
+
+### Guests, partner tenants and multi-tenant registrations (E)
+
+*When.* A partner's staff must use the assistant as guests, or the agent must serve two of the bank's own tenants.
+
+*What to know.* Cross-tenant access settings "manage collaboration with other Microsoft Entra organizations" through B2B collaboration (guests invited into your directory) and B2B direct connect (mutual trust, both sides enable it, blocked by default). Inbound trust settings decide whether your Conditional Access "trust MFA, compliant device, and Microsoft Entra hybrid joined device claims from another organization"; by default they are not trusted, so a guest who did MFA at home repeats it with you unless you trust it. Settings for users and groups "must match the access settings for applications" ([cross-tenant access](https://learn.microsoft.com/en-us/entra/external-id/cross-tenant-access-overview), dated 28 March 2025, read 30 October 2026). A guest's token for your API carries your tenant's `tid` and the guest's `oid` in your directory, so the ticket server's checks do not change; the entitlement question (which tickets may a partner guest read) is still yours. A multi-tenant app registration (`signInAudience: AzureADMultipleOrgs`) lets another tenant consent to your app and creates a service principal there; role assignments and app roles are then granted per tenant, and agent identities "can only be issued tokens in the Microsoft Entra tenant where they're created", so a two-tenant estate means two agent identities or a home-tenant agent with guest delegation.
+
+*How.* Decide per partner: guests (B2B collaboration) for people, a tenant-local agent identity for the agent, inbound MFA trust only for partners whose policy you have read. Evidence: a guest's decoded token (`tid`, `oid`), and the cross-tenant setting screenshot for that organisation.
 
 ### Customer-facing agents: Entra External ID (E)
 
@@ -876,6 +1073,12 @@ Each of these sits one step outside the core design but enters it the moment the
 
 *Micro-task M28 · one pod, one identity.* Prereq: an AKS cluster with `--enable-oidc-issuer --enable-workload-identity`, a user-assigned identity. Do: `az identity federated-credential create --identity-name <mi> -g rg-f03 -n aks-ticket --issuer $(az aks show -g rg-f03 -n <aks> --query oidcIssuerProfile.issuerUrl -o tsv) --subject system:serviceaccount:agents:ticket-agent --audiences api://AzureADTokenExchange`; create the service account with the `client-id` annotation and a pod with the `use: "true"` label running a script that calls `WorkloadIdentityCredential().get_token(...)`. Expect: a token; delete the federated credential, restart the pod, and the same call fails on the subject. Proof: both outcomes and the `AZURE_FEDERATED_TOKEN_FILE` path printed from inside the pod. EC: 5 min.
 
+### Network controls for agents: Global Secure Access and Defender (A)
+
+*When.* The client asks whether the agent's outbound web traffic can be filtered like a user's.
+
+*What to know.* Global Secure Access for agents "provides network security controls for Microsoft Copilot Studio agents, enabling you to apply the same security policies to agents that you use for users": web content filtering, threat intelligence filtering and file filtering, applied through the tenant-level baseline profile, for HTTP node traffic, custom connectors and the MCP server connector, enabled per Power Platform environment. It requires Microsoft Agent 365 (E7, or an add-on to E5) ([Global Secure Access for agents](https://learn.microsoft.com/en-us/entra/global-secure-access/concept-secure-web-ai-gateway-agents), read 30 October 2026). It is a Copilot Studio capability today; for a Foundry agent the equivalent is the Firewall egress allow-list in Section 10. Defender for Cloud's AI workload protection and Defender for AI services add posture and runtime detections over Azure OpenAI and Foundry resources; names and coverage move, general knowledge, verify before quoting.
+
 ### Certificates, mTLS and the one app that cannot be keyless (E)
 
 *When.* A downstream system (core banking, a partner API) only accepts a client certificate, or the ticket API itself is an app registration that must authenticate to Entra for OBO.
@@ -887,6 +1090,10 @@ Each of these sits one step outside the core design but enters it the moment the
 ### Copilot Studio and Microsoft 365 identity (A)
 
 *When.* The agent is built in Copilot Studio or surfaces in Teams or M365 Copilot. Authentication there is a product setting (Microsoft-managed, manual Entra app, or none), connectors carry the user's consent, and data loss prevention is Power Platform policy. All of it lives in [F11](../F11-Copilot-Studio-and-M365-Boundary/README.md); here, know only that a Copilot Studio agent calling your ticket MCP server is still an OAuth client presenting a token with an audience, and the server's checks do not change.
+
+> **MEMORISE · What applies to a non-human identity**
+>
+> Conditional Access for workload identities: single-tenant service principals only, location and risk conditions, Block as the only control, no MFA, managed identities not covered, Workload Identities Premium required, targeted directly by service-principal object ID. Authentication strengths and passwordless are for the people whose delegated tokens the agent carries. A third-party IdP still ends at Entra for anything Entra-protected. Agent identities are single-tenant even when the blueprint is multitenant.
 
 **Interview line.** "Conditional Access can block the agent's identity by location and risk, not with MFA and not for managed identities; a third-party IdP still ends at Entra for anything Entra-protected; customers go through External ID in their own tenant; a self-hosted agent on AKS uses Workload ID with one service account per agent; and whatever cannot be keyless gets a certificate in Key Vault."
 
@@ -1108,6 +1315,90 @@ Five passes, each one or two sittings. Do not start a pass until the previous pa
 
 The five scenarios to have built before any screen: S01, S07, S09, S12, S13.
 
+## 17. Auth integration frictions in real life
+
+The design in Sections 1–10 is clean on a whiteboard. Deployments stall on a short list of authentication and authorisation frictions that sit between the OAuth spec, Entra's rules, Foundry's preview surfaces and the client's enterprise process; network and schema frictions belong to F02 and F06 and are left out here. Each entry below is *symptom, why, what you do, evidence*. Sources: the MCP authorization spec and Aaron Parecki's critique that reshaped it ([3 April 2025](https://aaronparecki.com/2025/04/03/15/oauth-for-model-context-protocol)), the Foundry [MCP tool](https://learn.microsoft.com/en-us/azure/foundry/agents/how-to/tools/model-context-protocol), [MCP authentication](https://learn.microsoft.com/en-us/azure/foundry/agents/how-to/mcp-authentication) and [private networking](https://learn.microsoft.com/en-us/azure/foundry/agents/how-to/virtual-networks) pages, all read 30 October 2026; the rest from field experience, marked general knowledge.
+
+### MCP authorisation against Entra
+
+**Dynamic client registration does not exist in your tenant.** *Symptom:* an MCP client that follows the spec's "register dynamically" path fails against Entra. *Why:* the spec made DCR a `MAY` and Client ID Metadata Documents a `SHOULD` precisely because, in Parecki's words, "most commercial APIs are not going to enable Dynamic Client Registration on their production servers"; Entra registers clients as app registrations, by an administrator. *Do:* pre-register the client (Foundry Agent Service is the client; the agent identity is the principal), expose scopes, and publish protected-resource metadata so discovery still works from the server URL. *Evidence:* M22's metadata document and a client that reaches the token endpoint with a known `client_id`.
+
+**The MCP server was built as its own authorisation server.** *Symptom:* a sample server mints its own tokens; the bank's identity team refuses it. *Why:* early MCP samples merged AS and RS; the 2025-06-18 and later specs separate them so "access tokens only ever need to be validated by the MCP Resource Server." *Do:* delete the token-issuing code; Entra is the AS; your server validates. *Evidence:* the server's config has an issuer and an audience and no signing key.
+
+**Audience mismatch everywhere.** *Symptom:* `401` from the server although the token "looks right". *Why:* the client asked for `https://graph.microsoft.com/.default`, or the connection's `--audience` is the client ID instead of the app ID URI, or the server validates against the URL rather than the registered identifier; the spec's `resource` parameter is expressed in Entra through the scope. *Do:* one identifier (`api://ticket-api`) in three places: app registration, connection audience, server validator. *Evidence:* M05's decoded `aud` next to the server's expected value.
+
+**Consent is per user, per connection, per project.** *Symptom:* every new user hits a consent prompt on every tool; the pilot's 40 users generate 40 tickets. *Why:* passthrough consent is scoped that way by design, and a regulated tenant blocks user consent, so each becomes an admin task; Parecki calls this out as the enterprise friction the Identity Assertion Authorization Grant is meant to remove. *Do:* prefer agent identity or user delegation with admin-consented `.default` scopes for first-party tools; reserve passthrough for third-party SaaS and pre-consent at tenant level where the provider allows. *Evidence:* the grant record and a second user's first call succeeding without a prompt.
+
+**`Cannot pass Microsoft token to untrusted MCP endpoint`.** *Symptom:* managed OAuth refuses to send an Entra token to a server you consider yours. *Why:* Foundry's managed OAuth blocks Microsoft tokens to endpoints outside its trusted set; your custom server must be registered with an audience you control, not a Microsoft one. *Do:* register the server as an API (M02), use agent identity or user delegation with that audience, or custom OAuth for external providers. *Evidence:* the connection JSON showing the custom audience.
+
+**Scopes formatted wrong, refresh never happens.** *Symptom:* tool works for an hour, then `401`s. *Why:* custom OAuth scopes are space-separated, not comma-separated; without `offline_access` no refresh token is issued; app-only flows never had one. *Do:* fix the scope string; add `offline_access` for delegated custom OAuth only; for agent identity, rely on the platform exchange. *Evidence:* the second-hour call succeeding.
+
+**Approvals and consent interrupt the run.** *Symptom:* the agent stops after `mcp_approval_request` or `CONSENT_REQUIRED` (`-32006`) and the client code does not know how to continue. *Why:* both are output items the host must handle: approve with `previous_response_id` and the `approval_request_id`; open `consent_link` and retry. *Do:* build the host loop for both items before the first demo; set `require_approval` to `{"always": [...]}` for consequential tools and `never` for reads to avoid approval fatigue. *Evidence:* a trace showing request, approval, continuation.
+
+**Inherited permissions are invisible on the identity.** *Symptom:* Graph shows the agent identity with no permissions, yet its delegated tokens carry `scp`; or the reverse, you grant a delegated scope directly to the identity and nothing happens. *Why:* delegated scopes are declared inheritable on the blueprint and consented on the blueprint principal, then materialise only at token issuance; application roles are direct to the identity. *Do:* read blueprint, principal and identity together (M36); grant `roles` directly, `scp` through the blueprint. *Evidence:* the two decoded tokens with `xms_par_app_azp`.
+
+**The blueprint's secret is the whole fleet.** *Symptom:* a developer added a client secret to the blueprint "for local testing" and it is in a repo. *Why:* one credential impersonates every child identity; multitenant blueprints extend that across tenants. *Do:* federated credential through a managed identity, owners in a Tier-0 group, no secrets, access review on blueprint owners. *Evidence:* the blueprint's credential list showing one federated credential and nothing else.
+
+### Delegation across agents
+
+**Nested on-behalf-of in a multi-agent chain.** *Symptom:* agent A calls agent B calls a data platform as the user; the third hop fails or silently runs as an app. *Why:* every hop must redeem a token whose `aud` is itself, each middle tier needs its own consented permission to the next, `knownClientApplications` and `.default` are needed for combined consent, and a Conditional Access challenge at the last hop surfaces as `interaction_required` two agents away (nested OBO mechanics from general knowledge; Microsoft's Azure Architecture Blog has a 2026 post on exactly this, "Securing a multi-agent AI solution focused on user context and the complexities of on-behalf-of", which I could not retrieve today). *Do:* draw the audience at every arrow before writing code; prefer one delegated hop plus app-only fan-out where the user's authority is not needed; surface `interaction_required` as a `401` challenge to the client. *Evidence:* the three-token diagram with `aud` and `sub` on each, and a denied last hop.
+
+**Tokens expire mid-task.** *Symptom:* a long agent run fails at the last tool call with `401`. *Why:* a delegated token acquired at the start outlives neither the task nor a revoked session; app-only tokens are refreshed by the platform, delegated ones by your code. *Do:* acquire per call through the credential, not once per task; handle a claims challenge; design tasks to checkpoint. *Evidence:* a run longer than the token lifetime that completes.
+
+**Graph says no, slowly.** *Symptom:* `429` and throttling on Graph when every agent call fans out to directory or mailbox reads. *Why:* Graph throttles per app per tenant; agents multiply calls (general knowledge). *Do:* cache group membership with a short TTL keyed by `oid`, batch, and prefer the token's `groups` claim or the Search ACL feature over per-call lookups. *Evidence:* a throttling test and the cache-hit ratio.
+
+### Identity platform churn
+
+**The object names moved.** *Symptom:* yesterday's doc says blueprint principal, today's says blueprint; the portal shows a third name. *Why:* Entra Agent ID is preview-era in parts; Foundry's auth-type labels differ between pages. *Do:* design to the roles (who holds the credential, who is the actor, who holds the grant), relabel without redesigning, and date every statement. *Evidence:* this chapter's date stamps.
+
+**Publishing changed the identity.** *Symptom:* the agent that worked in the project returns `403` after publishing or migration. *Why:* migration "changes the agent identity" and "existing role assignments don't transfer"; `azd` grants `Foundry User` to the legacy shared identity for compatibility, which masks the gap in prototypes. *Do:* script the re-grant from the matrix as part of publishing (M17). *Evidence:* assignment lists before and after.
+
+**Hosted agent code assumed the project identity.** *Symptom:* code that used the project managed identity's roles fails inside a hosted agent. *Why:* "The project managed identity isn't available to your hosted-agent code"; the token service issues for the agent instance's identity. *Do:* grant to the agent identity; use the token service. *Evidence:* M11 plus a permitted call.
+
+### Network controls that break authentication
+
+**The firewall breaks managed identity.** *Symptom:* every identity call fails from the agent subnet. *Why:* identity endpoints (`login.microsoftonline.com`, `{region}.login.microsoft.com`, `control-{region}.identity.azure.net`) must be allowed, and TLS inspection that injects a certificate breaks the token call. *Do:* allow the `AzureActiveDirectory` tag and the identity FQDNs; exempt them from inspection. *Evidence:* a token acquired from inside the subnet.
+
+### Enterprise process
+
+**Consent is a committee.** *Symptom:* a two-line scope addition takes three weeks. *Why:* admin consent for a new permission is a change with an owner, a review and sometimes a security board; application permissions on Graph draw the most scrutiny since Midnight Blizzard. *Do:* request the full scope set once with `.default`; justify each permission by name in one line; design tools coarse enough to ship. *Evidence:* the consent request with justifications attached.
+
+**Who owns the app registration?** *Symptom:* the registration was created by a contractor's account; the credential expires with them; nobody can add a redirect URI. *Why:* ownership and sponsor fields were left empty. *Do:* owners are a group; sponsors on agent identities; certificates in Key Vault owned by the platform team. *Evidence:* `az ad app owner list` showing a group.
+
+**The licence is not there.** *Symptom:* the Conditional Access policy for the agent identity cannot be created. *Why:* Workload Identities Premium is required to create or modify policies scoped to service principals. *Do:* ask on day one; design the location control at the network layer if the licence is not coming. *Evidence:* the licence line in the design.
+
+**The SaaS tool has no Entra.** *Symptom:* the CRM's MCP server takes its own OAuth or a static key only. *Why:* most third-party servers are not Entra-protected. *Do:* OAuth identity passthrough with per-user consent where the provider supports it; otherwise key-based with the key in Key Vault, an egress allow-list and a named owner; never a shared Entra token. *Evidence:* the connection type per third-party tool in the matrix.
+
+**Connector identities in Logic Apps and Copilot Studio.** *Symptom:* a Logic Apps or Power Platform connector runs as whoever created the connection, so every agent action is logged as one developer. *Why:* connection ownership defaults to the maker (general knowledge). *Do:* service-principal or managed-identity connections where the connector supports them; per-user connections where the user's authority is required; otherwise record the limitation. *Evidence:* the connector's authentication setting in the component table.
+
+### Operations
+
+**Revoked, but still working.** *Symptom:* the role was removed an hour ago and the agent still reads. *Why:* tokens are cached until expiry; CAE does not cover managed identities. *Do:* short lifetimes where supported, test the revocation delay (M19), and treat "removed" as "removed after expiry" in incident runbooks. *Evidence:* the measured delay in the study log.
+
+**The token ended up in a log.** *Symptom:* a bearer string in Application Insights. *Why:* a debug line or a request-dump middleware. *Do:* a log filter test that fails the build if `Bearer ` appears; redact headers at the logging sink. *Evidence:* the failing test, then the passing one.
+
+### What to decide before the first server
+
+1. One audience identifier per tool API, used in registration, connection and validator.
+2. Connection type per tool: agent identity, user delegation, passthrough or key, with the reason in the matrix.
+3. The consent list, requested once, justified by name, with the app consent policy that will apply to it.
+4. Ownership: groups own registrations, sponsors own agent identities, the platform team owns certificates.
+5. The host loop for `mcp_approval_request` and `CONSENT_REQUIRED` before the first demo.
+6. The re-grant script for publishing.
+7. The identity endpoints on the firewall allow-list, exempt from TLS inspection.
+8. The licence lines: Workload Identities Premium for Conditional Access on agent identities, Agent 365 or E7 for ID Governance on agents.
+9. The log-filter test.
+
+> **MEMORISE · Six frictions you design around**
+>
+> Entra has no dynamic client registration, so pre-register and publish metadata. Consent is per user, per connection, per project, so use agent identity or admin-consented delegation for first-party tools. The audience must match in the registration, the connection and the validator. Publishing or migration changes the agent identity and drops its assignments, so script the re-grant. Nested delegation needs the right audience at every hop and surfaces claims challenges two agents away. Licences decide which controls exist: Workload Identities Premium for Conditional Access on agents, Agent 365 or E7 for governance.
+
+**Interview line.** "The hard parts are not the OAuth diagrams; they are that Entra does not do dynamic registration, consent is per user per tool, the audience has to match in three places, publishing changes the identity, nested delegation needs an audience at every hop, and the licences decide which controls exist; I design for all six before the first server."
+
+**Study check.** A client's pilot used passthrough OAuth for an internal ticket tool and now wants to go to 500 users. What breaks and what do you change? **Answer.** Five hundred per-user consents in a tenant that blocks user consent; change the tool to agent identity (app-only) or user delegation with an admin-consented `.default` scope, register it with an audience you control, and keep passthrough for the third-party SaaS tools only.
+
+> Rule to keep: decide audience, connection type, consent and ownership before the first line of server code; everything else is a symptom of skipping one of the four.
+
 ## One request, end to end
 
 Ayşe asks the assistant to refund £120 on `T-2041`.
@@ -1159,6 +1450,8 @@ MCP authorization is described at specification revision 2025-11-25; the S03.03 
 Protocol contract: [MCP authorization, 2025-11-25](https://modelcontextprotocol.io/specification/2025-11-25/basic/authorization); [MCP security best practices](https://modelcontextprotocol.io/specification/2025-11-25/basic/security_best_practices); [OAuth 2.1 draft 13](https://datatracker.ietf.org/doc/html/draft-ietf-oauth-v2-1-13); [RFC 9728 Protected Resource Metadata](https://datatracker.ietf.org/doc/html/rfc9728); [RFC 8707 Resource Indicators](https://www.rfc-editor.org/rfc/rfc8707.html).
 
 Entra and Foundry: [agent identity concepts in Foundry](https://learn.microsoft.com/en-us/azure/foundry/agents/concepts/agent-identity); [Foundry MCP authentication](https://learn.microsoft.com/en-us/azure/foundry/agents/how-to/mcp-authentication); [Entra agent identities](https://learn.microsoft.com/en-us/entra/agent-id/agent-identities); [Foundry RBAC](https://learn.microsoft.com/en-us/azure/foundry/concepts/rbac-foundry); [OBO flow](https://learn.microsoft.com/en-us/entra/identity-platform/v2-oauth2-on-behalf-of-flow); [access-token claims](https://learn.microsoft.com/en-us/entra/identity-platform/access-token-claims-reference); [Agent 365 overview](https://learn.microsoft.com/en-us/microsoft-agent-365/overview).
+
+Deep dives on Agent ID, all 2026: [Solbakken, digging deep into agent identities](https://goodworkaround.com/2026/02/02/digging-deep-into-entra-agent-identities/); [van der Woude, from blueprint to token](https://derkvanderwoude.medium.com/from-blueprint-to-token-how-entra-agent-identity-inheritance-really-works-fed114abe281); [Compass Security, Agent ID from a security perspective](https://blog.compass-security.com/2026/06/entra-agent-id-from-a-security-perspective/); [cy5, Agent ID gaps](https://cy5.io/blog/entra-agent-id/); [Fernando, agent users and dynamic groups](https://merill.net/2026/08/entra-agent-users-dynamic-groups/); [agent OBO flow](https://learn.microsoft.com/en-us/entra/agent-id/agent-on-behalf-of-oauth-flow); [authorization in Agent ID](https://learn.microsoft.com/en-us/entra/agent-id/authorization-agent-id). Video, not watched today: Microsoft Ignite 2025 Entra session replays and the "Microsoft Entra Agent Identity with Foundry" YouTube walkthrough; verify against the pages above.
 
 Platform docs used in the original sections:
 
