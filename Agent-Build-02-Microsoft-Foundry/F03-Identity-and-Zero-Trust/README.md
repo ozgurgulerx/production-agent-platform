@@ -1,25 +1,56 @@
 # F03 — Identity and Zero Trust for agents
 
-**Status:** learning material; no implementation verified. Architecture target **3**, code C1 target **F3**, current scores **unassessed**. Applied MCP and toolbox exercises remain in [F06](../F06-Agent-Tooling-MCP-and-Integration/README.md); this module establishes the reasoning needed to explain them.
+**Status:** teaching chapter, design proposals; no implementation verified. Architecture target **3**, code C1 target **F3**, current scores **unassessed**. Applied MCP and toolbox exercises live in [F06](../F06-Agent-Tooling-MCP-and-Integration/README.md); the Entra-protected tool server is [S03.03](../../Agent-Build-01-Fundamentals/S03-AI-Agents-Tools-and-MCP/S03.03-MCP-OAuth2.1/README.md). Companion files: [capability builds](capability-builds.md#build-contract), [RBAC matrix](rbac-matrix.md), [golden answers](golden-answers.md), [sign-in protocols](reference/protocols.md), [sketches](sketches/).
 
-[Capability builds and exact checklist targets](capability-builds.md#build-contract)
+An authenticated agent is not authorised to read a customer's ticket or issue a refund. This chapter follows identity from Ayşe's sign-in through retrieval and tool execution and separates, at every hop, three questions a client panel will ask separately: **who is calling, what did the token say, and who checked it**.
 
-An authenticated agent is not automatically authorised to read a customer's records or perform a refund. This module follows identity from employee sign-in through retrieval and tool execution, separating the caller, the application and the downstream resource at every boundary.
+### What we are trying to avoid
 
-## 1. Foundations and prerequisites
+- The agent calls `issue_refund` with the project's shared managed identity; the audit log says "the project" and nobody can name the agent or the person behind the request.
+- A token minted for the ticket MCP server is forwarded to AI Search; Search accepts it because nobody checked `aud`.
+- Ayşe asks "what is the escalation policy for T-2041?" and the answer cites a document only Mert may read, because the retrieval identity sees the whole index.
+- A developer's `az login` session makes the demo work; in production the container's identity has no role and the first call is a `403`.
+- A legacy test app still holds an application permission on Exchange; it has not been used since the pilot and nobody owns it.
 
-Know HTTP headers/status codes, Azure resources, and Python functions/exceptions. Before writing a client, explain these distinctions:
+### Has this happened?
 
-| Concept | Meaning in this workload |
-|---|---|
-| OpenID Connect | Identity layer commonly used for application sign-in. |
-| SAML | Enterprise federation protocol encountered in existing SSO estates; it does not remove the need for API access-token design. |
-| Application registration | Definition of an application, its exposed permissions and authentication configuration. |
-| Service principal | Tenant-local representation used for application access and assignments. |
-| Managed identity | Azure-managed workload identity; system-assigned lifecycle follows a resource, while user-assigned identities can be managed separately. |
-| Access token | Credential intended for a particular resource; possession is not proof of permission for every operation. |
+*Midnight Blizzard, January 2024.* A Russian state actor password-sprayed a legacy, non-production test tenant account at Microsoft that had no MFA. From there they reached a legacy test OAuth application that still held elevated access to the corporate environment, created further OAuth apps and a user to consent to them, and granted themselves the Exchange Online `full_access_as_app` role. They read corporate email until Microsoft's own security team detected the activity on 12 January 2024. Microsoft's guidance afterwards: audit every identity's privilege, scrutinise unused identities and apps with app-only permissions, and scope mailbox access per app. **An application permission is a standing grant; an unused app with elevated access is an identity nobody is watching.** Source: [Microsoft Security blog, 25 January 2024](https://www.microsoft.com/en-us/security/blog/2024/01/25/midnight-blizzard-guidance-for-responders-on-nation-state-attack/), read 30 October 2026.
 
-### 1a. Microsoft Entra ID, managed identities and Agent ID
+*Storm-0558, 2023.* A consumer (MSA) signing key landed in a 2021 crash dump, the dump moved from the isolated signing environment into the corporate debugging network, and an engineer's account with access to that network was compromised. The key then signed tokens that enterprise Exchange Online accepted: Microsoft's libraries checked the signature but did not check key scope, and "developers in the mail system incorrectly assumed libraries performed complete validation." Remediation included libraries that automate key-scope validation. **A valid signature is not a valid token; issuer, key scope and audience are the check.** Source: [MSRC, 6 September 2023, with the March 2024 addendum](https://www.microsoft.com/en-us/msrc/blog/2023/09/results-of-major-technical-investigations-for-storm-0558-key-acquisition), read 30 October 2026.
+
+*GitHub MCP, May 2025.* A user connected an agent to the official GitHub MCP server with access to their account, which held a public and a private repository. An attacker filed an issue in the public repo containing a prompt injection. Asked to review open issues, the agent read the payload, pulled data from the private repo into context and opened a pull request in the public repo containing it, including the user's salary and relocation plan. Invariant's write-up stresses the flaw was not in the MCP server; the agent's reach exceeded the task. **The token's scope is the blast radius of the worst prompt the agent will ever read.** Source: [Invariant Labs, 26 May 2025](https://invariantlabs.ai/blog/mcp-github-vulnerability), read 30 October 2026.
+
+### What the chapter covers
+
+The Entra object chain and what a token says (1–2); grants and consent (3); keyless Python and the three execution contexts (4); the agent's own identity in Foundry (5); least privilege on the data planes and the denied-access run (6); delegation and the OBO audience rule (7); Entra as authorisation server for the ticket MCP server (8); OIDC and SAML for sign-in (9); the Zero Trust planes as one table (10); diagnosis (11); exercises, evidence and the job-market map (12–13).
+
+### What you have at the end
+
+Four diagrams you can redraw blind, a role-name table, a least-privilege matrix for A3, six golden answers in skeleton, and a list of denied-access runs to produce. The runs, not the prose, are the evidence.
+
+## 1. Who is calling: the Entra object chain
+
+### The chain in one picture
+
+```mermaid
+flowchart LR
+  T[Tenant] --> AR[App registration<br/>application object]
+  AR --> SP[Service principal<br/>per tenant]
+  T --> U[User]
+  T --> MI[Managed identity<br/>= SP, Azure holds the credential]
+  T --> BP[Agent blueprint<br/>holds the credential]
+  BP --> AI[Agent identity<br/>= special SP, no credential]
+  EXT[External IdP token<br/>GitHub, AKS] -. federated credential .-> AR
+  EXT -. federated credential .-> BP
+  SP --> RA[(Role assignments<br/>consent grants)]
+  MI --> RA
+  AI --> RA
+  U --> RA
+```
+
+What to notice: credentials sit on the application object, the managed identity (held by Azure) or the blueprint; role assignments and consent grants attach to the tenant-local principal. **Credentials answer "prove it"; assignments answer "allowed to".** The two never live on the same object by accident.
+
+### The objects, one at a time
 
 #### Microsoft Entra ID: the directory of identities
 
@@ -57,7 +88,33 @@ Separate control-plane resource provisioning from supported Foundry data-plane o
 
 Design in order: list required tool operations; choose the principal or supported delegated flow for each; grant minimum target-resource permissions; enforce business rules inside the tool; test allowed and denied actions. Attaching a tool only defines what the model can attempt.
 
-### 1b. Token anatomy
+### Workload identity federation
+
+A federated credential is a trust rule on an app registration or blueprint: "accept a token from this external issuer with this subject in exchange for a token as me." GitHub Actions and AKS use it so no secret is stored anywhere. The subject string is the whole security boundary, so write it narrowly: for GitHub, `repo:<org>/<repo>:environment:<env>` rather than `repo:<org>/<repo>:ref:refs/heads/*` (subject formats from general knowledge; verify against the [workload identity federation](https://learn.microsoft.com/en-us/entra/workload-id/workload-identity-federation) page before building). Foundry uses the same mechanism for agents: the blueprint's federated credential trusts the Agent Service resource provider, so "Foundry projects, agent code, and the project managed identity never hold the credential" ([agent identity concepts](https://learn.microsoft.com/en-us/azure/foundry/agents/concepts/agent-identity), read 30 October 2026).
+
+*Micro-example.* A deployment workflow for the ticket server authenticates with a federated credential whose subject is `repo:ozgurgulerx/production-agent-platform:environment:prod`. A pull-request workflow on a fork presents `repo:someone/fork:pull_request`; Entra refuses the exchange with an `AADSTS70021`-class subject mismatch (error code from general knowledge, verify). No role assignment was ever consulted.
+
+*Where it goes wrong.* A wildcard subject on the federated credential; a user-assigned managed identity shared by six services "to save time", so a compromise of any one is a compromise of all; a `ClientSecretCredential` in a `.env` file that outlives the pilot.
+
+**Interview line.** "App registration defines it, service principal is it in your tenant, managed identity means Azure holds its credential, agent identity means the blueprint does; roles and consent attach to the principal, never to the registration."
+
+**Study check.** Which object do you pass to `az role assignment create --assignee-object-id` for a Foundry agent, and why not the blueprint? **Answer.** The agent identity's object ID: it is the service principal that presents tokens to the resource. The blueprint holds the credential and impersonates the identity; it is not the actor the resource sees.
+
+> Rule to keep: one principal per workload, one credential per principal, zero credentials in code.
+
+## 2. What the token says
+
+### Access, ID and refresh tokens
+
+| Token | Audience | Used for | Never |
+|---|---|---|---|
+| Access token | The API named in `aud` | Calling that API | Presented to a different API; read by the client as a source of truth |
+| ID token | The client application | Establishing who signed in | Sent to an API as a credential |
+| Refresh token | The token endpoint | Getting new access tokens without the user | Logged, shared across clients, issued without `offline_access` |
+
+The v1 and v2 endpoints issue different claim sets (`appid` vs `azp`, issuer URL shape); `ver` tells you which rules apply. Treat tokens issued for other APIs as opaque strings.
+
+### The claims and the validation order
 
 For a JWT access token issued to your API, inspect these claims only after supported middleware validates the signature and trusted issuer. Client applications should treat tokens for other APIs as opaque.
 
@@ -90,7 +147,7 @@ Synthetic decoded **v2 app-only payload** for a custom ticket API; these invente
 }
 ```
 
-**S27 recall card:**
+**S27 recall card.**
 
 - `scp`: delegated scopes, space-separated; check the required scope and the user's resource access.
 - `roles`: API roles, an array; app-only permissions or user roles—its presence alone does not prove app-only access.
@@ -99,7 +156,90 @@ Source: [access-token claims reference](https://learn.microsoft.com/en-us/entra/
 
 Do not use an ID token as an API access token. Do not read an unvalidated token payload and treat its claims as trustworthy. Token validation belongs in supported authentication middleware or libraries; a JWT is a format, not a security decision.
 
-## 2. Three execution contexts
+### Validation, in order
+
+1. Signature against the issuer's published keys (JWKS), with key discovery, caching and rotation handled by the library.
+2. `iss` and `tid`: the tenant you trust, no other.
+3. `aud`: this API's identifier (app ID URI or client ID), nothing else.
+4. `exp` and `nbf` with the library's clock-skew policy.
+5. `scp` (delegated) or `roles` (app-only or assigned user roles): the permission the requested tool needs.
+6. Business authorisation: may this subject touch this ticket, this amount, now.
+
+Steps 1–5 are authentication middleware; step 6 is your code. Storm-0558 was a failure at step 2 with step 1 passing.
+
+**Interview line.** "Signature says Entra signed it; audience says it was signed for me; scope or role says what it may do; my code says whether it may do it to this record."
+
+**Study check.** A correctly signed, unexpired token arrives at the ticket server with `aud` = Microsoft Graph and `scp` containing `tickets.read`. Permit or deny? **Answer.** Deny with `401`. The audience is wrong, so nothing after step 3 is evaluated; the scope value is irrelevant.
+
+> Rule to keep: decoding is not validating; validating is not authorising.
+
+## 3. Grants and consent
+
+### The grant catalogue, by agent situation
+
+OAuth 2.1 grants map to agent situations cleanly once you ask whose authority the resulting token carries.
+
+| Grant | Subject of the token | Agent situation | Failure mode |
+|---|---|---|---|
+| Authorization code + PKCE | The signed-in user | Ayşe signs into the ticket assistant's web UI | Public client holding a secret; redirect URI not exact-matched |
+| Client credentials | The application or agent identity | Autonomous agent calls the ticket MCP server under its own identity | Agent granted `Refunds.Execute` "to be safe"; shared identity across agents |
+| On-behalf-of | The user, with the middle tier as actor | Ticket API calls Graph or a core-banking API as Ayşe | Redeeming a token whose `aud` is not the middle tier; silent fallback to app-only on denial |
+| Device code | The user, via a second device | Engineer signs in to the CLI on a headless box | Used in a daemon because "it worked once" |
+| Refresh | Same as the original grant | Long sessions without re-prompting | Refresh token logged; issued to a public client without rotation |
+| Implicit | Removed in OAuth 2.1 | None | Still enabled on an old app registration |
+
+For a Foundry agent calling an MCP tool with agent identity authentication there is no grant you configure: Agent Service runs the exchange (blueprint credential → agent identity token → audience-scoped token; Section 5), and the result is app-only unless user delegation is configured ([Foundry MCP authentication](https://learn.microsoft.com/en-us/azure/foundry/agents/how-to/mcp-authentication), read 30 October 2026).
+
+### Delegated versus application permissions
+
+A **delegated permission** (`scp`) is the intersection of what the app was granted and what the user may do; the API still checks the user's entitlement to the record. An **application permission** (`roles`) is the app's own standing authority, no user present, and Graph application permissions always require administrator consent. The OBO page puts the boundary in one sentence: roles "remain attached to the principal (the user) and never to the application operating on the user's behalf" ([OBO flow](https://learn.microsoft.com/en-us/entra/identity-platform/v2-oauth2-on-behalf-of-flow), read 30 October 2026).
+
+### Consent in a regulated tenant
+
+Most banks disable user consent entirely, so every delegated scope your tool needs goes through the admin-consent workflow (tenant policy from general knowledge; confirm with the client's identity team). Design for it: request `.default` against the API so one admin consent covers the exposed scopes; never mix `.default` with named scopes in one request (`AADSTS70011`); treat each new scope as a change ticket with an owner, and keep the exposed scope set coarse enough to ship and fine enough to deny (`tickets.read` and `tickets.refund`, not one scope per tool). A configured permission on the app registration is not evidence that consent was granted; the grant record is.
+
+*Micro-example.* The ticket API exposes `tickets.read` and `tickets.refund`. Mert's client requests `api://ticket-api/.default`; the admin consents once; Mert's token carries `scp: tickets.read tickets.refund`, Ayşe's carries `scp: tickets.read`. The server never asks Entra who Mert is at call time; it reads the validated `scp`.
+
+*When not to.* Do not add `offline_access` to a daemon or an agent's own identity; app-only flows do not use refresh tokens, and offline consent to unknown apps was one of Midnight Blizzard's detection signals.
+
+### Microsoft Graph permissions and consent
+
+Choose the Graph endpoint first, then its least-privileged supported permission. **Delegated access** combines the app's granted scopes with the signed-in user's authority; consent does not give that user access to another person's restricted data. User consent depends on tenant policy and permission type; privileged delegated permissions require administrator consent.
+
+**Application access** uses the app's own authority without a signed-in user and requires administrator consent for Graph application permissions. Record the tenant, client service principal, resource API, exact permission and consent grant. Use resource-specific restrictions where the chosen API supports them. Request a Graph token through the appropriate flow; do not forward the MCP API's incoming token to Graph or silently switch a denied delegated call to app-only.
+
+Evidence: show the redacted grant record, an allowed request and a denied request. A configured permission on an app registration is not evidence that consent was granted. Deep dives remain in [F11](../F11-Copilot-Studio-and-M365-Boundary/README.md). Sources: [Graph permissions](https://learn.microsoft.com/en-us/graph/permissions-overview) and [Entra consent](https://learn.microsoft.com/en-us/entra/identity-platform/permissions-consent-overview), local sections **Delegated access** and **Consent**.
+
+**Interview line.** "Delegated means the user's authority narrowed by the app's grant; application means the app's own authority, admin-consented, no user in the loop; a bank will make you justify every application permission by name."
+
+**Study check.** Ayşe's token for the ticket API has `scp: tickets.read`. The ticket API needs to read her calendar through Graph. Which grant, which consent, which token? **Answer.** OBO: the ticket API redeems her token (its own `aud`) for a Graph token with `Calendars.Read` as a delegated scope; the tenant admin has consented to the ticket API's Graph permissions; the Graph token's subject is Ayşe and its actor is the ticket API.
+
+> Rule to keep: a scope is a ceiling the API enforces, not a key the client holds.
+
+## 4. Keyless Azure from Python and the three execution contexts
+
+### The credential classes
+
+| Class | Principal | Use | Not for |
+|---|---|---|---|
+| `ManagedIdentityCredential(client_id=...)` | System- or user-assigned managed identity | Container Apps, Functions, AKS without federation | Local development |
+| `WorkloadIdentityCredential` | Federated workload (AKS, GitHub Actions) | CI and Kubernetes without secrets | Hosts without a federated token file |
+| `OnBehalfOfCredential` | The user, via the middle tier | Ticket API calling a downstream API as Ayşe | Daemons |
+| `AzureCliCredential` | The developer's `az login` session | A Mac during development | Anything deployed |
+| `ClientSecretCredential` | An app registration with a secret | Tests against a throwaway tenant | Production; the secret is the thing you are trying not to have |
+| `DefaultAzureCredential` | Whichever of the above succeeds first | Getting started | Production, see below |
+
+`DefaultAzureCredential` tries, in order: environment, workload identity, managed identity, shared token cache (Windows), VS Code, Azure CLI, Azure PowerShell, Azure Developer CLI, interactive browser (off by default), broker. Microsoft's own guidance is to replace it once deployed: "replace `DefaultAzureCredential` with a specific `TokenCredential` implementation, such as `ManagedIdentityCredential`" ([credential chains](https://learn.microsoft.com/en-us/azure/developer/python/sdk/authentication/credential-chains), read 30 October 2026). Two reasons it fails a review: a host environment variable can change which credential wins at runtime, and a failing `ManagedIdentityCredential` on a developer machine adds latency to every first call. If you must keep the chain, pin it: `AZURE_TOKEN_CREDENTIALS=prod` (azure-identity ≥ 1.23) or a single class name (≥ 1.24), and `DefaultAzureCredential(require_envvar=True)`.
+
+### Scope strings and the OpenAI client
+
+A scope string is the audience you are asking for plus `/.default`. The five you will type from memory: `https://cognitiveservices.azure.com/.default` (Azure OpenAI and Foundry models), `https://search.azure.com/.default`, `https://ai.azure.com/.default` (Foundry project data plane), `https://graph.microsoft.com/.default`, `https://vault.azure.net/.default`. Feed the OpenAI SDK with `get_bearer_token_provider(credential, scope)` as `azure_ad_token_provider` so the client refreshes before expiry and never sees a key. Scope strings and the provider helper are from general knowledge; check the pinned `azure-identity` and `openai` versions before relying on them. Token caching: in memory by default, on disk opt-in; CAE is per request via `enable_cae=True` and "isn't supported for developer and managed identity credentials" ([azure-identity README](https://learn.microsoft.com/en-us/python/api/overview/azure/identity-readme), read 30 October 2026).
+
+### The client you will write under the clock
+
+CB120 and checklist 2.3 are the same exercise: an `httpx` client that calls Azure OpenAI with a token provider, refreshes before expiry, retries `429` and `5xx` with jitter and a bounded budget, and never writes a token to a log. Tests use a fake provider that returns a short-lived token and counts calls. **No sketch is supplied on purpose**: the exercise is learner-written, timed, without AI. The skeleton you should be able to put on paper in ten minutes: a `TokenProvider` protocol with `get_token() -> (value, expires_on)`; a `KeylessClient` holding the provider, a base URL and a retry policy; `_headers()` that refreshes when `expires_on - now < 120s`; a `post()` that loops at most N times on retryable status with `random.uniform` jitter; a log filter test asserting `"Bearer"` never appears in captured records.
+
+### Three execution contexts
 
 **Local development:** a developer credential represents the signed-in developer. A successful call may reflect broad developer permissions that the deployed identity does not have. Record the actual principal used; test the intended runtime principal separately.
 
@@ -109,7 +249,152 @@ Do not use an ID token as an API access token. Do not read an unvalidated token 
 
 Credential chains are convenient during development but can conceal which identity succeeded. The exercise is to explain the selected credential and its scope, not merely observe that a request worked. Managed-identity CLI login is for a suitable Azure environment, not a replacement for normal developer login on a Mac.
 
-## 3. Follow the employee through the request
+*Micro-example.* The ticket server works on your Mac against a dev index because `AzureCliCredential` is you, and you are Owner. In Container Apps the same code runs as a user-assigned managed identity with no role on the index; the first query returns `403` from Search. The fix is a `Search Index Data Reader` assignment on the index, not a key in Key Vault.
+
+**Interview line.** "Managed identity in the runtime, workload identity federation in CI, the CLI on my laptop, and I can tell you which one made any given call because the chain is pinned."
+
+**Study check.** Why does a working `DefaultAzureCredential` on a developer machine prove nothing about production authorisation? **Answer.** It resolved to the developer's own identity, which usually holds broader roles than the runtime principal; a passing call tells you the developer is allowed, not that the managed identity is.
+
+> Rule to keep: the credential that worked is a fact to record, not a result to celebrate.
+
+## 5. The agent's own identity: Entra Agent ID in Foundry
+
+This is the section a Foundry panel scores. The question behind every variant is the same: when the agent acts, whose identity is in the audit log, and who approved its permissions.
+
+### The objects
+
+| Object | What it is | Holds credentials? | Receives permissions? |
+|---|---|---|---|
+| Agent identity blueprint | Template and parent for agent identities of one kind; "establishes the kind of agent" | Yes: federated credential, certificate or secret | Governs its identities; CA and admin actions target the kind |
+| Agent identity | "A special service principal in Microsoft Entra ID", created under a blueprint, which the blueprint "is authorized to impersonate" | No | Yes: RBAC, data-plane roles, app roles |
+| Agent's user account (optional) | A user object decorated as an AI agent, 1:1 with an agent identity, for scenarios that need a user | No | As a user |
+| Sponsor | The human user or group accountable for the agent, recorded on the identity | n/a | n/a |
+
+Agent identities are single-tenant even when the blueprint is multitenant. Definitions from [Entra agent identities](https://learn.microsoft.com/en-us/entra/agent-id/agent-identities), read 30 October 2026; the object names are preview-era and move, so relabel rather than reopen the design.
+
+### What Foundry provisions for you
+
+In the current agent object model, creating an agent provisions a unique blueprint and the identity for its default instance. Projects still carry a shared project-level blueprint and identity for legacy agents, and `azd` assigns `Foundry User` to that shared identity for compatibility. Nothing is granted downstream: "A newly created agent identity starts without resource permissions." Hosted agents get tokens for the current agent instance's identity through a token service; "the project managed identity isn't available to your hosted-agent code", and the sandbox contains no blueprint credential. Migrating a legacy agent "changes the agent identity" and "existing role assignments don't transfer" ([agent identity concepts](https://learn.microsoft.com/en-us/azure/foundry/agents/concepts/agent-identity), read 30 October 2026).
+
+### The runtime token exchange
+
+```mermaid
+sequenceDiagram
+  participant AS as Agent Service
+  participant E as Microsoft Entra ID
+  participant M as Ticket MCP server
+  AS->>E: 1. Blueprint credential (federated, trusts the Agent Service RP)
+  E-->>AS: 2. Token for the agent identity
+  AS->>E: 3. Agent identity token, request aud = ticket API
+  E-->>AS: 4. Audience-scoped access token (roles: Tickets.Read)
+  AS->>M: get_ticket(T-2041) with bearer token
+  M->>M: Validate iss, aud, exp, roles; check ticket entitlement
+  M-->>AS: Result, or 403 with no effect
+```
+
+What to notice: two round trips to Entra before the tool sees anything, no secret in the project or the agent code, and the resource "checks the agent identity's RBAC role assignments before granting or denying access." Authentication to the resource does not itself grant access.
+
+### Six ways a tool connection can authenticate
+
+Foundry's MCP connection types are the three-options question in product form. `--auth-type` values are from the `azd ai connection create` examples on the [MCP authentication page](https://learn.microsoft.com/en-us/azure/foundry/agents/how-to/mcp-authentication), read 30 October 2026; the page does not show CLI values for the others.
+
+| Connection type | Principal the MCP server sees | Carries the user? | Right when | Fails a review when |
+|---|---|---|---|---|
+| Agent identity (`agentic-identity`) | This agent's own service principal | No | Autonomous work; one audit line per agent | The agent needs the user's entitlements |
+| Project managed identity (`project-managed-identity`) | The project's shared identity | No | Prototypes; legacy agents | Any production tenant: every agent in the project shares one audit identity and one permission set |
+| Client user delegation (`UserEntraToken` / `AgentOnBehalfOfUser`) | The calling user, with the agent as actor | Yes | The tool must respect the user's access; preview | Consent is not designed in; Mert's and Ayşe's scopes differ |
+| OAuth identity passthrough | The user after their own consent at the MCP server's provider | Yes | Third-party SaaS tools with their own IdP | Microsoft tokens to untrusted endpoints: `Cannot pass Microsoft token to untrusted MCP endpoint` |
+| Key-based | A stored header; whatever the key represents | No | Vendor tools that only take a key | Anything you control; the key is shared and unaudited |
+| Unauthenticated | Nobody | No | Public reference data | Anything that writes |
+
+Consent for passthrough arrives as an `oauth_consent_request` output item with a `consent_link`; the user consents in that window, not in the chat, and "opening the link or closing the window doesn't by itself confirm that authorization succeeded." Custom MCP servers must be registered with an audience you control, not a Microsoft one.
+
+*Micro-example.* Three agents share a project. Under project managed identity, the refund agent, the FAQ agent and the triage agent all present the same `oid` to the ticket server, so the server cannot grant `Refunds.Execute` to one without granting it to all. Under agent identity, you assign `Tickets.Read` to all three identities and `Refunds.Execute` to the refund agent only; the triage agent's `issue_refund` call returns `403` and the trace names the agent.
+
+### Prototype to production
+
+The shared project identity is the prototype path; a per-agent identity is the production path; publishing and migration are where identities change and role assignments must be re-made. The sentence for the panel: "Each agent has its own blueprint and identity from creation; the shared project identity is for legacy agents, and nothing I ship uses it."
+
+### Lifecycle and governance at scale
+
+Record a sponsor on every identity; it is who gets called at 3 a.m. Blueprints let an administrator act on a kind of agent at once: "Disable all Sales Assistant agents", "Revoke a permission grant for all Sales Assistant agents", "Apply a conditional access policy to all Sales Assistant Agents." Add access reviews on the agent identities' role assignments at the same cadence as service accounts, and plan deletion in order (identity, then blueprint) so no orphaned assignments remain. Which Conditional Access conditions apply to non-human identities, and the licensing for workload-identity policies, are from general knowledge; verify before promising them to a client.
+
+**Microsoft Agent 365** is the control plane above the identity: observe (a central registry of agents, adoption, activity and health), govern (lifecycle, access control and compliance through the Microsoft 365 admin centre, Entra and Purview), secure (Entra risk-based access, Purview data risk, Defender threat detection that can "block unsafe behaviors and malicious activity"). Generally available since 1 May 2026, licensed per user, with Microsoft 365 E5 as the recommended prerequisite ([Agent 365 overview](https://learn.microsoft.com/en-us/microsoft-agent-365/overview), read 30 October 2026). How Foundry, Copilot Studio and third-party agents each appear in the registry is not on that page; verify before stating it. The 60-second answer to "forty agents from three teams and a vendor": every agent has an Entra identity with a sponsor, the registry is the inventory, Purview and Defender are the data and threat lenses, and switching one off is a blueprint-level action.
+
+**Interview line.** "The agent has its own Entra identity, created with the agent, with no credential of its own and no permissions until I grant them; the tool sees the agent, the audit log names the agent, and the shared project identity never leaves the prototype."
+
+**Study check.** A hosted agent's code calls `DefaultAzureCredential()` and gets a token. Whose? **Answer.** The agent instance's identity, via the hosted-agent token service; the project managed identity is not available in hosted-agent code, so if the code assumed the project identity's roles, the next downstream call is a `403`.
+
+> Rule to keep: one agent, one identity, one sponsor, zero shared credentials.
+
+## 6. Least privilege on the data planes
+
+### The role names you will be asked
+
+Control-plane roles (`Owner`, `Contributor`, `Reader`) manage the resource; data-plane roles touch its contents; they do not imply each other. Names below are from the vendor pages read 30 October 2026 unless marked.
+
+| Resource | Role | Grants | Does not grant |
+|---|---|---|---|
+| Azure OpenAI | `Cognitive Services OpenAI User` | Inference with Entra ID; view deployments | Keys, deployments, fine-tuning, quota |
+| Azure OpenAI | `Cognitive Services OpenAI Contributor` | OpenAI User plus deployments, fine-tuning, stored completions | Keys, quota |
+| Azure OpenAI | `Cognitive Services Contributor` | Keys, deployments, resource creation | Inference with Entra ID |
+| Any | `Cognitive Services Usages Reader` | Quota view, subscription scope only | Anything else |
+| Foundry | `Foundry Agent Consumer` | Interact with agent endpoints; least privilege for callers | Building |
+| Foundry | `Foundry User` | Build and test agents in a project (data actions) | Project creation, role assignment |
+| Foundry | `Foundry Project Manager` | Manage projects, publish agents, assign `Foundry User` | Account creation |
+| Foundry | `Foundry Account Owner` / `Foundry Owner` | Full account and project management; Owner also builds | Nothing; highly privileged |
+| AI Search | `Search Index Data Reader` | Query indexes, retrieve from knowledge bases | Writes, object definitions, keys |
+| AI Search | `Search Index Data Contributor` | Load documents and query | Object definitions, admin keys |
+| AI Search | `Search Service Contributor` | Create and run indexes, indexers, skillsets; read keys | Query or load documents through RBAC |
+| Storage | `Storage Blob Data Reader` / `Contributor` | Read / read-write blobs | Account management |
+| Key Vault | `Key Vault Secrets User` (RBAC permission model) | Read secret values | Writing or rotating; general knowledge, verify |
+| Cosmos DB | Built-in data-plane roles (`Cosmos DB Built-in Data Reader`) | Data access; not Azure RBAC in the portal | Control plane; general knowledge, verify |
+
+Three traps. `Contributor` on an Azure OpenAI resource cannot call the model with Entra ID; it can read the keys, which is worse. Indexers run with service credentials, so a per-index role does not restrict them. AI Search denies every role-based request until the service's authentication option is set to `Both` or `Role-based access control`, and a request carrying an API key wins over the token.
+
+### The A3 matrix and the denied-access run
+
+[rbac-matrix.md](rbac-matrix.md) holds the A3 matrix: principal (Ayşe, Mert, the ticket API, each agent identity, the indexer, CI) × resource × role × scope, one line of justification each, applied with `az role assignment create`. The generic version below is the reasoning behind it.
+
+Before assigning roles, fill this in for each environment. Use the smallest supported scope and verify exact data-plane roles in current documentation.
+
+| Principal | Resource and operation | Intended authority | Negative case |
+|---|---|---|---|
+| Employee | Application ticket read | Ticket/customer entitlement | Another employee's restricted ticket |
+| Retrieval workload | Search query | Read index plus enforced document permissions | Result outside the caller's allowed set |
+| Indexing workload | Search index writes and source reads | Separate ingestion authority | Runtime agent attempts index mutation |
+| Agent/tool caller | Refund proposal API | Specific tool/action permission | Arbitrary API or higher-value action |
+| Approver | Approval record | Business approval authority | Requester attempts self-approval where prohibited |
+| Executor | Business refund operation | Approved action and current preconditions | Replay or expired approval |
+| Deployment workflow | Resource changes | Environment-limited deployment role | Production action from untrusted workflow |
+
+Control-plane permissions, data-plane roles, delegated scopes and business entitlements are different layers. Resource Contributor access does not by itself establish the right data access. A caller can be allowed to query an index while still requiring document-level filtering.
+
+For Foundry, distinguish project identity, agent identity and an externally hosted runtime identity. Current [agent identity guidance](https://learn.microsoft.com/en-us/azure/foundry/agents/concepts/agent-identity) describes agent-specific identities and a hosted-agent token service; it states that project managed identity is not available inside hosted-agent code. Check the selected agent generation and tool authentication mode rather than assuming every tool uses the same principal.
+
+### The denied-access run
+
+No build in this module is done without one. Remove one role from the matrix, run the call, capture the `403` body and the Activity Log or sign-in log entry, redact, commit. For Azure RBAC the signal is `AuthorizationFailed` with the missing action named; for the ticket server it is your own `403` with `error="insufficient_scope"` and a correlation ID; for Search it is `403` on the query. Then reinstate the role and show the same call succeed. The pair is the evidence.
+
+*Where it goes wrong.* The role is removed and the call still works: the token was cached and will be for up to its lifetime, or an inherited subscription-level `Contributor` is shadowing the resource-level change. Both are findings worth a line in the study log.
+
+### Permission-aware retrieval
+
+A shared Search identity can have access to more documents than any employee. Therefore model prompts cannot enforce document permissions. The retrieval boundary must derive allowed identities or permissions from validated context and apply the supported ACL/filter mechanism before documents enter the model context.
+
+Design two users with different document access and one shared document. Test each user's allowed results, denied results and citations. Also test stale group membership or permission changes: decide how quickly access changes must take effect, what caches exist and how they are invalidated. A semantic cache must not return one user's private answer to another.
+
+Do not accept group IDs from an arbitrary request field as proof of membership. Handle overage and permission resolution through an approved identity/data path. F07 owns the retrieval implementation and quality measurements; this module owns the security argument.
+
+Two mechanisms, do not confuse them: Azure RBAC decides whether a principal may query the index at all; document-level access control (security filters on a permissions field, or the native ACL feature) decides which documents that query may return ([Search RBAC](https://learn.microsoft.com/en-us/azure/search/search-security-rbac), read 30 October 2026; [document-level access](https://learn.microsoft.com/en-us/azure/search/search-document-level-access-overview)). Group IDs for the filter come from the validated token or a Graph lookup under the app's authority, never from a request field.
+
+**Interview line.** "Control plane and data plane are different roles, the shared retrieval identity sees more than any user, so the filter is derived from the validated caller and applied before the model sees a chunk; and I can show you the `403` from the run where I took the role away."
+
+**Study check.** The retrieval service holds `Search Index Data Reader` on the index. Ayşe asks a question whose best chunk is in a document only Mert may read. What stops it reaching the model, and what does not? **Answer.** The security filter built from Ayşe's validated group claims stops it; the RBAC role does not, because the role authorises the service, not the user; the prompt cannot, because the model never had a say.
+
+> Rule to keep: a role authorises a principal; a filter authorises a document; neither is the other.
+
+## 7. Delegation: on-behalf-of and the audience rule
 
 A support employee asks for a policy explanation for ticket T. The application first checks that the employee can access T. It then requests authorised policy evidence. The assistant may propose a refund, but the tool API rechecks permission and the current ticket state before any change.
 
@@ -135,41 +420,44 @@ Choose delegated access when the downstream operation should reflect the user's 
 
 An overnight document indexer is an application job. Reading one employee's private material may require delegated access. A refund approval is a business decision recorded by the tool service; an OAuth scope alone is not proof that this refund satisfies policy.
 
-### Microsoft Graph permissions and consent
+### The exchange itself
 
-Choose the Graph endpoint first, then its least-privileged supported permission. **Delegated access** combines the app's granted scopes with the signed-in user's authority; consent does not give that user access to another person's restricted data. User consent depends on tenant policy and permission type; privileged delegated permissions require administrator consent.
+| Parameter | Value |
+|---|---|
+| `grant_type` | `urn:ietf:params:oauth:grant-type:jwt-bearer` |
+| `client_id` | The middle tier's application ID |
+| `client_secret` or `client_assertion` | The middle tier's credential; a certificate in production |
+| `assertion` | The incoming access token |
+| `requested_token_use` | `on_behalf_of` |
+| `scope` | The downstream API's delegated scopes, or its `/.default` |
 
-**Application access** uses the app's own authority without a signed-in user and requires administrator consent for Graph application permissions. Record the tenant, client service principal, resource API, exact permission and consent grant. Use resource-specific restrictions where the chosen API supports them. Request a Graph token through the appropriate flow; do not forward the MCP API's incoming token to Graph or silently switch a denied delegated call to app-only.
+The rule that decides most OBO bugs: the incoming token "must have an audience (`aud`) claim of the app making this OBO request." If a client hands the ticket API a token meant for Graph, the API cannot redeem it and should reject it. Other limits from the same page: OBO works for user principals only (daemons use client credentials); single-page apps hand their token to a confidential middle tier rather than redeeming it themselves; apps with custom signing keys cannot be middle tiers; a downstream Conditional Access challenge returns `interaction_required`, which the middle tier surfaces as `401` with a `WWW-Authenticate` challenge so the client re-authenticates instead of retrying the cached token ([OBO flow](https://learn.microsoft.com/en-us/entra/identity-platform/v2-oauth2-on-behalf-of-flow), read 30 October 2026). A sketch of the request shape is in [`sketches/obo_exchange.py`](sketches/obo_exchange.py) (untested).
 
-Evidence: show the redacted grant record, an allowed request and a denied request. A configured permission on an app registration is not evidence that consent was granted. Deep dives remain in [F11](../F11-Copilot-Studio-and-M365-Boundary/README.md). Sources: [Graph permissions](https://learn.microsoft.com/en-us/graph/permissions-overview) and [Entra consent](https://learn.microsoft.com/en-us/entra/identity-platform/permissions-consent-overview), local sections **Delegated access** and **Consent**.
+*When not to.* The nightly indexer, a reconciliation job, a health probe: workload-owned work with bounded authority uses the workload's identity. Choosing OBO there spreads a user's delegated authority into places no user is watching.
 
-## 4. Principal-to-resource matrix
+**Interview line.** "OBO redeems a token whose audience is me for a token whose audience is the next API, as the same user; if the audience is not me I reject it, and if the user is denied I say so rather than retrying as the app."
 
-Before assigning roles, fill this in for each environment. Use the smallest supported scope and verify exact data-plane roles in current documentation.
+**Study check.** The ticket API receives Ayşe's token with `aud` = ticket API and exchanges it for a Graph token. Who is the subject and who is the actor of the Graph token, and what does Graph check? **Answer.** Subject Ayşe, actor the ticket API; Graph checks the ticket API's consented delegated permissions intersected with what Ayşe herself may read.
 
-| Principal | Resource and operation | Intended authority | Negative case |
-|---|---|---|---|
-| Employee | Application ticket read | Ticket/customer entitlement | Another employee's restricted ticket |
-| Retrieval workload | Search query | Read index plus enforced document permissions | Result outside the caller's allowed set |
-| Indexing workload | Search index writes and source reads | Separate ingestion authority | Runtime agent attempts index mutation |
-| Agent/tool caller | Refund proposal API | Specific tool/action permission | Arbitrary API or higher-value action |
-| Approver | Approval record | Business approval authority | Requester attempts self-approval where prohibited |
-| Executor | Business refund operation | Approved action and current preconditions | Replay or expired approval |
-| Deployment workflow | Resource changes | Environment-limited deployment role | Production action from untrusted workflow |
+> Rule to keep: never convert a delegated denial into an application retry.
 
-Control-plane permissions, data-plane roles, delegated scopes and business entitlements are different layers. Resource Contributor access does not by itself establish the right data access. A caller can be allowed to query an index while still requiring document-level filtering.
+## 8. Entra as authorisation server for the ticket MCP server
 
-For Foundry, distinguish project identity, agent identity and an externally hosted runtime identity. Current [agent identity guidance](https://learn.microsoft.com/en-us/azure/foundry/agents/concepts/agent-identity) describes agent-specific identities and a hosted-agent token service; it states that project managed identity is not available inside hosted-agent code. Check the selected agent generation and tool authentication mode rather than assuming every tool uses the same principal.
+### The MCP authorisation spec in Entra terms
 
-## 5. Permission-aware retrieval
+The MCP specification (2025-11-25) makes the MCP server an OAuth 2.1 resource server and leaves the authorisation server to you. With Entra in that seat the mapping is mechanical ([MCP authorization](https://modelcontextprotocol.io/specification/2025-11-25/basic/authorization), read 30 October 2026):
 
-A shared Search identity can have access to more documents than any employee. Therefore model prompts cannot enforce document permissions. The retrieval boundary must derive allowed identities or permissions from validated context and apply the supported ACL/filter mechanism before documents enter the model context.
+| Spec requirement | Entra answer in this design |
+|---|---|
+| Protected Resource Metadata (RFC 9728), `MUST` | Serve `/.well-known/oauth-protected-resource` with `authorization_servers: ["https://login.microsoftonline.com/<tenant>/v2.0"]` and `scopes_supported: ["tickets.read", "tickets.refund"]`; return it in `WWW-Authenticate` on `401` |
+| AS metadata discovery (RFC 8414 or OIDC discovery), `MUST` | Entra's OIDC discovery document at `<issuer>/.well-known/openid-configuration` |
+| Client ID Metadata Documents `SHOULD`, dynamic registration `MAY` | Pre-registration: Entra registers clients as app registrations; the spec's priority order puts pre-registered credentials first anyway. Whether Entra supports CIMD or DCR for this is from general knowledge, verify |
+| Resource indicator (RFC 8707) in every request, `MUST` for clients | Entra expresses the audience through the scope: `api://<ticket-api>/tickets.read` or `/.default`; the issued `aud` is the app ID URI. Validate `aud`, not the `resource` parameter |
+| PKCE `S256`, `MUST` | Supported; the client refuses to proceed if `code_challenge_methods_supported` is absent |
+| `401` invalid token, `403` `insufficient_scope` with the required `scope` in `WWW-Authenticate` | Your middleware; the S03.03 tests already pin these |
+| Token passthrough forbidden; downstream calls use a separate token | OBO (Section 7) or the server's own managed identity; never the inbound bearer |
 
-Design two users with different document access and one shared document. Test each user's allowed results, denied results and citations. Also test stale group membership or permission changes: decide how quickly access changes must take effect, what caches exist and how they are invalidated. A semantic cache must not return one user's private answer to another.
-
-Do not accept group IDs from an arbitrary request field as proof of membership. Handle overage and permission resolution through an approved identity/data path. F07 owns the retrieval implementation and quality measurements; this module owns the security argument.
-
-## 6. MCP boundary and Zero Trust
+Two spec sentences to quote: "MCP servers **MUST** validate that access tokens were issued specifically for them as the intended audience" and "The MCP server **MUST NOT** pass through the token it received from the MCP client."
 
 ### Granting an agent permission to use MCP tools
 
@@ -239,74 +527,34 @@ If the MCP server subsequently calls Storage or AI Search, that is another authe
 
 Sources: [Foundry MCP authentication](https://learn.microsoft.com/en-us/azure/foundry/agents/how-to/mcp-authentication), [Foundry agent identity token exchange](https://learn.microsoft.com/en-us/azure/foundry/agents/concepts/agent-identity), and [Entra access tokens and validation](https://learn.microsoft.com/en-us/entra/identity-platform/access-tokens).
 
-### OpenID Connect: signing the user into the agent application
+### APIM in front of the server
 
-**OpenID Connect (OIDC) is an authentication protocol built on OAuth 2.0.** It lets your application establish who signed in. Entra acts as the **identity provider / OpenID Provider**; your complaints application is the **client / relying party** that trusts its sign-in result.
+Put APIM in front when you want a gateway-level audience check, per-caller rate limits and a single egress identity to the backend. `validate-azure-ad-token` takes `tenant-id` (required), `audiences`, `required-claims` with `match="all|any"` and a `separator` for multi-valued claims, `client-application-ids`, and `failed-validation-httpcode` (default `401`); the validated `Jwt` lands in `output-token-variable-name` for later policies ([policy reference](https://learn.microsoft.com/en-us/azure/api-management/validate-azure-ad-token-policy), read 30 October 2026). Use `required-claims` on `scp` or `roles` for the per-tool floor, `rate-limit-by-key` keyed on `oid` for fairness, and `authentication-managed-identity` for the hop to the backend; the latter two are from general knowledge, verify the pinned policy names. The backend still validates its own token and owns ticket entitlement: a gateway check that can be bypassed by reaching the backend's private endpoint directly is not a control.
 
-Register the application with Entra, configure its redirect URI (the approved address for returning the sign-in response), and use a supported authentication library. Request the `openid` scope to request OIDC authentication.
+### Error shapes carried from S03.03
 
-```text
-Employee → Application → Entra sign-in
-                           ↓
-Application validates the returned ID token
-                           ↓
-Application establishes the employee's signed-in session
-```
+| Situation | Transport | Shape | Retry? |
+|---|---|---|---|
+| No or invalid token | HTTP `401` | `WWW-Authenticate: Bearer resource_metadata=...` | After obtaining a token |
+| Scope missing for the tool | HTTP `403` | `error="insufficient_scope", scope="tickets.refund"` | Step-up for user clients; abort for app-only |
+| Ticket does not exist | Tool result `isError: true` | `not_found` with the ticket ID | No |
+| Bad arguments | JSON-RPC `-32602` | `INVALID_PARAMS` | After fixing the call |
+| Refund above policy limit | Tool result `isError: true` | `policy_denied` with the limit, no effect | No; policy is not negotiable by retry |
+| Timeout on `issue_refund` | Transport | Unknown outcome | Reconcile by operation key; never retry with a fresh key |
 
-The **ID token** tells the application about the authenticated user. It is intended for that application, not for calling an MCP API. Libraries validate its signature, issuer, audience, expiry and applicable request-binding checks.
+The split matters because the model reads tool results and the host reads HTTP: a `403` never reaches the model as "try harder", and a `policy_denied` never reaches the host as a transport fault.
 
-Subsequent Foundry/MCP calls need **access tokens** for their respective APIs and the required permissions. User sign-in does not automatically grant downstream access. A background agent acting under its own identity does not need an interactive OIDC user sign-in for every tool call.
+**Interview line.** "Entra is the authorisation server, my server is the resource server, Foundry is the client; the server publishes its metadata, validates issuer, audience and scope locally against Entra's keys, maps scopes to tools in code, and acquires its own tokens for anything downstream."
 
-Source: [OpenID Connect on the Microsoft identity platform](https://learn.microsoft.com/en-us/entra/identity-platform/v2-protocols-oidc). The diagram summarises sign-in, not the individual browser redirects or token exchanges.
+**Study check.** Which of these does OAuth give you for free and which must you write: tool discovery, audience validation, the `tickets.refund` → `issue_refund` mapping, refusing a refund above £500? **Answer.** Discovery is MCP, not OAuth; audience validation is library middleware; the scope-to-tool mapping is yours; the £500 rule is business policy in the tool service, outside OAuth entirely.
 
-#### When and how to use OIDC
+> Rule to keep: the prompt guides the proposal; the token bounds the attempt; the backend authorises the effect.
 
-Use OIDC when building an interactive web, desktop or mobile application where employees sign in with Entra. For the complaints assistant, this is the employee-facing application login, not the agent's background identity.
+## 9. Signing the user in: OIDC and SAML
 
-A typical authorization-code flow with PKCE works as follows:
+**OIDC** is the authentication layer on OAuth 2.0: the app redirects to Entra, gets back an ID token for itself, and establishes a session; access tokens for APIs are a separate request. **SAML 2.0** does the same job with a signed XML assertion and is what you meet in an enterprise portal that predates OIDC; the service provider in SAML terms is not an Entra service principal. **OAuth** is for API access and says nothing about who the user is. Neither an ID token nor a SAML assertion is ever the bearer token for the MCP server. The full walkthroughs, flows and configuration steps are in [reference/protocols.md](reference/protocols.md).
 
-1. Configure the app registration, tenant, client ID, redirect URI and required API permissions. Use a supported authentication library.
-2. The application redirects the browser to Entra, requesting `openid` and any required API scopes. PKCE binds code redemption to the client that started the request.
-3. Entra authenticates the employee and applies applicable sign-in policy; consent is obtained where required.
-4. Entra returns a short-lived authorization code to the registered redirect URI.
-5. The client redeems the code with its PKCE verifier and, for a confidential client, its configured client authentication. It receives the requested, authorised tokens.
-6. The application validates the ID token for sign-in; an access token is presented only to its intended API. Browser/public clients must not hold a client secret.
-
-Source: [Authorization code flow with OIDC and PKCE](https://learn.microsoft.com/en-us/entra/identity-platform/v2-oauth2-auth-code-flow).
-
-### SAML: enterprise single sign-on into an application
-
-**SAML 2.0 is another protocol for federated sign-in**, where an application trusts an identity provider to authenticate users. Single sign-on (SSO) means users can access participating applications using an existing sign-in session. SAML remains common in enterprise applications.
-
-Entra acts as the **identity provider (IdP)**. The application is the **service provider (SP)**—this protocol term is not the same as an Entra service principal.
-
-```text
-Employee → Enterprise application → Entra sign-in
-                                      ↓
-Application receives and validates a signed SAML assertion
-                                      ↓
-Application establishes the employee's signed-in session
-```
-
-Administrators configure trust through identifiers, reply/recipient URLs, signing certificates and metadata. The SAML assertion is an XML security statement about the authenticated user; the application validates it before accepting sign-in.
-
-In our Foundry/MCP design, SAML may authenticate the employee into an enterprise front end. It does not replace the OAuth access tokens used for subsequent API calls. Do not send a SAML assertion as the MCP bearer access token. Any transition to delegated API access requires an explicitly supported authentication flow.
-
-Source: [Microsoft identity platform SAML protocol](https://learn.microsoft.com/en-us/entra/identity-platform/saml-protocol-reference).
-
-#### When and how to use SAML
-
-Use SAML when integrating an enterprise application whose supported SSO interface is SAML, or when maintaining an existing SAML federation. For example, a bank's existing case-management portal might use SAML while its agent integration separately uses OAuth API access.
-
-1. Add/select the enterprise application in Entra and configure SAML single sign-on.
-2. Configure the application's Entity ID (its SAML identifier), Reply/ACS URL (where it receives the response), and required user claims.
-3. Configure the application to trust Entra's issuer, sign-in endpoint and signing certificate/metadata. Assign the intended users or groups as required by the application's access configuration.
-4. In an application-initiated flow, the browser goes from the application to Entra for sign-in and returns with a SAML response. The application validates it and establishes a session.
-5. Test sign-in and denied access, and plan signing-certificate renewal. Follow the application's integration guide; user provisioning and sign-in are separate concerns.
-
-Source: [Configure enterprise application SAML SSO](https://learn.microsoft.com/en-us/entra/identity/enterprise-apps/add-application-portal-setup-sso).
-
-#### Choosing the protocol for each boundary
+### Choosing the protocol for each boundary
 
 | Situation in our design | Choice and reason |
 |---|---|
@@ -317,7 +565,17 @@ Source: [Configure enterprise application SAML SSO](https://learn.microsoft.com/
 
 These are design choices for the examples, not a requirement to implement all three protocols in every application.
 
-### Enforcement and Zero Trust boundaries
+*Micro-example.* The bank's case-management portal signs users in with SAML; the new ticket assistant is embedded in it. The assistant's own app registration uses OIDC with PKCE for Ayşe's session and requests `api://ticket-api/.default`; the SAML session never crosses into the API path.
+
+**Interview line.** "OIDC for anything I build, SAML only where a portal already speaks it, OAuth for every API call, and a sign-in token is never a tool token."
+
+**Study check.** Why does keeping the portal's SAML SSO not reduce the identity work for the agent? **Answer.** SAML establishes the browser session; the agent's tool calls need OAuth access tokens with the right audience and scopes, acquired through a supported flow, and those are configured separately.
+
+> Rule to keep: sign-in proves the person; access tokens authorise the call.
+
+## 10. Zero Trust: the planes and the one-table answer
+
+### Enforcement boundaries
 
 Treat an MCP server as a protected API. The server validates the token intended for it and checks scope and business permissions for the requested tool. Discovering a tool or successfully opening a session does not grant authority to execute every tool. For downstream calls, acquire credentials intended for that downstream resource; do not pass through an incoming token to an unrelated audience.
 
@@ -343,6 +601,25 @@ APIM may enforce an outer authentication or rate-limit policy, but the backend s
 
 Network controls restrict paths and traffic, not business permissions. Use [Azure network controls](https://learn.microsoft.com/en-us/azure/security/fundamentals/network-overview) with identity checks at every protected API. F02 owns topology detail; this table is the request-by-request whiteboard answer.
 
+### The A3 component table
+
+The row a client interview asks for component by component. *Proposed, not built*; residency is UK South unless the client pins otherwise.
+
+| Component | Identity it runs as | Identity it accepts | Network path | What is logged | Residency |
+|---|---|---|---|---|---|
+| Employee web app | App registration, confidential client | Ayşe, Mert via OIDC + CA (MFA, compliant device) | Front Door + WAF, private backend | Sign-in, correlation ID, no tokens | UK South |
+| Foundry agent | Its own agent identity | Web app via `Foundry Agent Consumer` | Private endpoint, public access disabled | Trace with agent `oid`, tool call, decision code | UK South, Data Zone EU deployment |
+| Ticket MCP server (Container Apps) | User-assigned managed identity | Agent identity (`roles`) or Ayşe via delegation (`scp`) | APIM → private endpoint; no public ingress | Caller `oid`, scope, tool, ticket, outcome, approval ID | UK South |
+| AI Search | n/a | Retrieval service MI with `Search Index Data Reader`; filters from caller groups | Private endpoint; RBAC auth mode | Query, filter hash, result count per caller | UK South |
+| Blob source documents | n/a | Indexer MI with `Storage Blob Data Reader` | Private endpoint | Access logs | UK South |
+| Azure OpenAI deployment | n/a | Agent and services with `Cognitive Services OpenAI User` | Private endpoint; keys disabled | Request ID, token counts, content-filter result | Data Zone EU |
+| Key Vault | n/a | Runtimes with `Key Vault Secrets User` on the one remaining secret | Private endpoint | Secret version reads | UK South |
+| APIM | System-assigned MI to backends | Agent identity, web app via `validate-azure-ad-token` | Internal mode, Front Door in front | Gateway log with `oid`, policy outcome | UK South |
+| Monitoring | n/a | Audit readers under PIM | Private link scope | Correlation IDs joined across hops | UK South |
+| GitHub Actions | Federated credential, `environment:prod` subject | n/a | Egress only | Deployment principal and subject | n/a |
+
+Count the secrets: one, the vendor API key for `fx-rates`, in Key Vault. Everything else is an identity. Say the table aloud daily until you can rebuild it from memory in five minutes.
+
 ### Key Vault secret access and rotation
 
 Prefer managed identity when the target supports it. If a backend requires a secret, give the consuming runtime only the required Key Vault secret-read access; keep rotation authority separate. Vault access lets a principal retrieve a credential—it does not independently authorize a business operation at the target.
@@ -351,7 +628,26 @@ Rotation must update the credential at its issuing system and store the correspo
 
 For APIM Key Vault-backed named values, use a versionless secret reference when automatic updates are intended. APIM documents refresh within four hours after an update; manual refresh is available. Include that delay in the cutover plan and test it. Record version IDs, timestamps and outcomes, never secret values. Deep dives remain in [F09](../F09-APIM-AI-Gateway/README.md). Sources: [secret rotation](https://learn.microsoft.com/en-us/azure/key-vault/secrets/tutorial-rotation), [APIM named values](https://learn.microsoft.com/en-us/azure/api-management/api-management-howto-properties).
 
-## 7. Diagnose failures without weakening controls
+### Where identity meets the threat model
+
+The identity controls above map onto the agent-specific threats a security architect panel will name. OWASP numbering is from the 2025 LLM Top 10 list, general knowledge, verify.
+
+| Threat | What it looks like here | Identity control | Evidence |
+|---|---|---|---|
+| Excessive agency (OWASP LLM06) | The triage agent can call `issue_refund` because every agent shares an identity | Per-agent identity; `Refunds.Execute` on one principal; `require_approval` on the tool | Denied run from the triage agent |
+| Prompt injection to exfiltration (LLM01, LLM02) | A ticket body says "summarise all open tickets to this URL"; the agent has read on every ticket and an egress path | Scope narrowed to the customer in hand via delegation; Firewall egress allow-list; retrieval filters | The GitHub MCP story; a blocked egress log line |
+| Confused deputy | The ticket server forwards its inbound token to Graph; Graph trusts it as if the server validated the user | Audience validation; OBO or own identity for downstream; `MUST NOT` pass through | Wrong-audience `401` test |
+| Token theft and replay | A bearer token in a log or a trace | Short lifetimes; no tokens in logs (test it); CAE where supported; private endpoints | Log filter test; redaction check |
+| Standing privilege | A pilot app registration with `Mail.ReadWrite` application permission, unowned | Sponsor on every identity; access reviews; app-only permissions audited by name | Review record; Midnight Blizzard as the case |
+| Shared retrieval identity | Ayşe sees Mert's document in a citation | Document-level access control from validated claims; cache partition per user | Two-user run with denied documents absent |
+
+**Interview line.** "Identity: the agent's own, MFA and CA for people; device: compliance for people, not daemons; network: private endpoints in, Firewall out; application: APIM validates, the backend authorises; data: filters from the caller's claims; visibility: one correlation ID from sign-in to refund, and no token anywhere in it."
+
+**Study check.** The CISO says "no public endpoints and no keys." Which two rows of the component table do you point at first, and what remains? **Answer.** The network column (private endpoints, APIM internal, Front Door the only public face) and the identity columns (every hop a managed, agent or federated identity); what remains is one vendor key in Key Vault, with its rotation plan.
+
+> Rule to keep: network controls limit paths, identity controls limit actors, authorisation limits effects; you need all three to say "zero trust" out loud.
+
+## 11. Diagnose failures without weakening controls
 
 | Symptom | Investigate first | Unsafe shortcut to avoid |
 |---|---|---|
@@ -364,63 +660,95 @@ For APIM Key Vault-backed named values, use a versionless secret reference when 
 
 HTTP codes alone are not a full diagnosis: services can surface policy/network failures differently. Record the resource, correlation ID, operation and safe error code. Never record the access token, client secret, full private prompt or unredacted retrieved content just to debug authentication.
 
-## 8. Learner exercises and evidence
+Entra error codes worth recognising on sight (codes from general knowledge, verify): `AADSTS65001` consent missing; `AADSTS700016` application not found in the tenant you addressed; `AADSTS50013` the OBO assertion is invalid or its audience is not you; `AADSTS70011` you mixed `.default` with named scopes; `interaction_required` the downstream resource wants a claims challenge, surface a `401`. From Foundry: `Cannot pass Microsoft token to untrusted MCP endpoint` means managed OAuth refused to send an Entra token to a server outside the trusted set, by design.
+
+## 12. Exercises and evidence
 
 1. Draw the delegated and application flows for the same downstream operation. State the audience, principal, permission source and validation owner at each arrow.
 2. Write a token-provider HTTP client in a 25-minute no-AI exercise. Use a fake provider for local tests. Cover expiry/refresh, bounded retry of transient failures and absence of tokens in logs. Do not build cryptographic token validation by hand. Commit your implementation and tests under this module's `sketches/` after the exercise; log date, elapsed time, no-AI assistance status, test results and remaining gaps. One logged exercise is evidence, not automatic F3 qualification.
 3. Compare one developer call and the intended runtime call. Record which principal was used and the minimum role required. A local mock is not proof of Azure permission behaviour.
-4. This week, run and extend the [S03.03 HTTP authorization tests](../../Agent-Build-01-Fundamentals/S03-AI-Agents-Tools-and-MCP/S03.03-MCP-OAuth2.1/tests/test_http_authorization.py) against its actual server boundary: a correctly signed, unexpired token for the wrong audience must be rejected; a caller missing the required tool permission must not execute the tool. The [S03.03 server](../../Agent-Build-01-Fundamentals/S03-AI-Agents-Tools-and-MCP/S03.03-MCP-OAuth2.1/README.md) checks scopes, so use the missing-scope case there; a missing required role in `roles` is the corresponding Entra app-role case in Section 6, not an interchangeable claim. Existing test code is not a fresh run: record the command, result, redacted denial and proof of no tool effect. That recorded denied run is the ticking-rule evidence; do not tick it from prose.
+4. This week, run and extend the [S03.03 HTTP authorization tests](../../Agent-Build-01-Fundamentals/S03-AI-Agents-Tools-and-MCP/S03.03-MCP-OAuth2.1/tests/test_http_authorization.py) against its actual server boundary: a correctly signed, unexpired token for the wrong audience must be rejected; a caller missing the required tool permission must not execute the tool. The [S03.03 server](../../Agent-Build-01-Fundamentals/S03-AI-Agents-Tools-and-MCP/S03.03-MCP-OAuth2.1/README.md) checks scopes, so use the missing-scope case there; a missing required role in `roles` is the corresponding Entra app-role case in Section 8, not an interchangeable claim. Existing test code is not a fresh run: record the command, result, redacted denial and proof of no tool effect. That recorded denied run is the ticking-rule evidence; do not tick it from prose.
 5. Execute the two-user retrieval cases in F07. Record allowed/denied outcomes and how identity changes affect cached results.
+6. Fill [rbac-matrix.md](rbac-matrix.md) for A3 with real principals and apply it; record one denied and one permitted run per row that has a negative case.
+7. Record the six [golden answers](golden-answers.md) as voice memos under three minutes each; transcribe, grade against the skeleton, keep the gaps.
+8. Decode three real tokens (your user token, a managed-identity token from a Container App, an agent-identity token from a Foundry trace) with [`sketches/decode_token_claims.py`](sketches/decode_token_claims.py) and annotate every claim. The script does not validate anything; it exists so you stop pasting tokens into websites.
 
-Completion requires explaining authentication versus authorisation, defending the permission matrix, diagnosing wrong audience/insufficient role/expired credential/missing consent, and showing denied cross-user access. Architecture 3 requires built evidence; F3 requires learner-written timed code without AI. Store actual evidence in the study log with date, assistance, result and gaps. Current scores remain **unassessed**.
+Completion requires explaining authentication versus authorisation, defending the permission matrix, diagnosing wrong audience, insufficient role, expired credential and missing consent, and showing denied cross-user access. Architecture 3 requires built evidence; F3 requires learner-written timed code without AI. Store evidence in the study log with date, assistance, result and gaps. Current scores remain **unassessed**.
 
-## 9. Job-market identity requirements and interview evidence
+## 13. Job-market map
 
-Provenance: learner-supplied contract digest, Cognizant requirement and 7/13 October market studies; requirements and counts have not been independently rechecked.
-
-### What the supplied evidence actually names
-
-| Evidence category | Supplied source and wording | Interpretation boundary |
-|---|---|---|
-| Named protocols and architecture terms | Cognizant permanent SI role: “OIDC, SAML, RBAC, Zero Trust, secure-by-design” | Reported as the only explicit OIDC/SAML occurrence across the reviewed ads; the 27 October mapping flags SAML/Zero Trust as thin |
-| Named Microsoft identity products | Access Computer Consulting, Agentic Automation Engineer, £700–750: “Microsoft Graph, Entra ID”, alongside Semantic Kernel/Dataverse and Bedrock Agents as an alternative | Explicit Graph/Entra preparation; does not itself specify OBO or agent identities |
-| Supporting Azure services | Uniting People, Senior Azure Engineer, SC, £385: APIM, Key Vault, GitHub Actions | Services are named; the supplied review reports no other Azure-side explicit Entra, managed identity, OBO or Entra Agent ID wording |
-| Generic IAM and security | Summer-Browning Lead Technical Architect: “landing zones, IAM, microservices, AI security, AI guardrails”; Morson Edge Lead Technical Architect, SC: “IAM, AI governance and guardrails” | IAM means identity and access management; exact protocols/products are unspecified |
-| Governance and operational controls | Hays £800 investment manager: “security, data governance”; Boston Hale: “AI security, approvals and reviews, auditability”; TEKsystems AI Platform Lead: “enterprise APIs/tools, AI governance/security” | Prepare concrete controls and evidence without attributing a specific protocol to the ad |
-| Inferred integration depth | Uniting People FDE £600: “MCP broker”; Hays/Adecco Copilot roles; Talent Smart: “MCP, microservices, event-driven” | Tool authorization and M365 tenancy are design considerations inferred from these systems, not quoted requirements. MCP itself can also expose public unauthenticated tools |
-| Global permanent/lab study, 7 October | Glean: “Azure/Entra ID, Okta, firewalls, VPNs, SSL/TLS, DLP, WAFs”, plus permission-aware RAG interview question | Broader identity, network and data controls; includes a non-Microsoft identity provider |
-| Global governance and cloud comparison | Accenture: “segregation of duties, approval gates, evidence trails”; Google CE: “IAM, VPC, CMEK” | Preserve cross-cloud vocabulary and governance evidence alongside Azure implementation |
-
-The supplied review covers roughly 70 contract roles plus the Cognizant requirement and market studies. It reports identity/authorization mentions in 4 of 30 architect requirements and 17 of 54 role descriptions in the global study, mostly brief mentions. It reports no contract ad explicitly naming OAuth 2.0, MCP authorization, agent identity or on-behalf-of. These are source-reported counts and absence claims, not a new audit.
-
-### Coverage and what to demonstrate
+Across roughly 70 London contract adverts, the Cognizant SI requirement and the October market studies, identity appears as vocabulary rather than depth: "OIDC, SAML, RBAC, Zero Trust, secure-by-design" (Cognizant), "Microsoft Graph, Entra ID" (one £700–750 agentic automation role), APIM, Key Vault and GitHub Actions (one Azure engineer role), "IAM, AI security, guardrails" (lead architect roles), permission-aware RAG (Glean), segregation of duties and evidence trails (Accenture), IAM, VPC and CMEK (Google). No contract advert named OAuth 2.0, MCP authorisation, agent identity or on-behalf-of. The adverts test the words in Sections 1–3 and 9–10; the client panel tests Sections 5–8. Provenance and counts live in the project's market files, not here.
 
 | Topic | Meaning and study location | Required learner evidence |
 |---|---|---|
-| OIDC, SAML and OAuth | Section 6: user sign-in versus protected API access, provider/client/server roles, configuration and token boundaries | Explain each in one sentence, draw both sign-in flows, then explain why neither an ID token nor SAML assertion is the MCP access token |
-| RBAC and IAM | Sections 1 and 4: principal + permission + scope; distinguish Azure RBAC, Entra directory roles and API application roles | Produce a minimum-permission matrix and demonstrate one denied operation |
-| Zero Trust and secure-by-design | Sections 4–6: check each identity, resource and network boundary; design controls before deployment | Trace one request and explain authorization at every hop, including denied customer access |
+| OIDC, SAML and OAuth | Section 9: user sign-in versus protected API access, provider/client/server roles, configuration and token boundaries | Explain each in one sentence, draw both sign-in flows, then explain why neither an ID token nor SAML assertion is the MCP access token |
+| RBAC and IAM | Sections 1 and 6: principal + permission + scope; distinguish Azure RBAC, Entra directory roles and API application roles | Produce a minimum-permission matrix and demonstrate one denied operation |
+| Zero Trust and secure-by-design | Sections 6, 8 and 10: check each identity, resource and network boundary; design controls before deployment | Trace one request and explain authorization at every hop, including denied customer access |
 | Entra and Microsoft Graph | Section 3 (Graph consent) plus [F11](../F11-Copilot-Studio-and-M365-Boundary/README.md): app-only versus delegated permissions and consent; Graph exposes protected Microsoft 365/directory APIs | Explain whose data is accessible and why; show approved permission and consent configuration without tokens |
-| Managed identity and GitHub Actions | Section 2: runtime identity versus deployment identity; federation avoids stored pipeline credentials | Compare the developer, runtime and CI principals and their scopes |
-| Key Vault and APIM | Section 6 (secret access and rotation) plus [F09](../F09-APIM-AI-Gateway/README.md): secret access and rotation, gateway token validation, backend identity and bypass prevention | Explain why secret storage is not authorization and why gateway checks do not replace backend business rules |
-| Agent identity, MCP broker and OBO | Sections 3 and 6 plus [F06](../F06-Agent-Tooling-MCP-and-Integration/README.md): identify the actor, token audience and permission source at each hop | Trace a real permitted and denied tool call; do not silently replace delegated denial with broader app-only access |
+| Managed identity and GitHub Actions | Section 4: runtime identity versus deployment identity; federation avoids stored pipeline credentials | Compare the developer, runtime and CI principals and their scopes |
+| Key Vault and APIM | Section 10 (secret access and rotation) plus [F09](../F09-APIM-AI-Gateway/README.md): secret access and rotation, gateway token validation, backend identity and bypass prevention | Explain why secret storage is not authorization and why gateway checks do not replace backend business rules |
+| Agent identity, MCP broker and OBO | Sections 5, 7 and 8 plus [F06](../F06-Agent-Tooling-MCP-and-Integration/README.md): identify the actor, token audience and permission source at each hop | Trace a real permitted and denied tool call; do not silently replace delegated denial with broader app-only access |
 | Copilot and M365 tenancy | [F11](../F11-Copilot-Studio-and-M365-Boundary/README.md): tenant boundaries, publishing, consent and source access | Explain which tenant owns the app/user/resource and verify the selected integration's support |
-| Permission-aware RAG | Section 5 plus [F07](../F07-RAG-on-AI-Search/README.md): retrieval must respect document access before context construction | Two-user allowed/denied retrieval and cache-isolation evidence |
+| Permission-aware RAG | Section 6 plus [F07](../F07-RAG-on-AI-Search/README.md): retrieval must respect document access before context construction | Two-user allowed/denied retrieval and cache-isolation evidence |
 | Okta | Identity-provider comparison: an organisation may use Okta for sign-in; establish the actual federation trust and token issuer | Draw the chosen trust chain; do not assume an Okta token is accepted by a Foundry endpoint |
 | Landing zones, firewalls, VPNs, TLS and WAFs | [F02](../F02-Landing-Zones-and-Networking/README.md): landing zones set platform foundations; firewalls filter traffic; VPNs connect networks; TLS protects transport; WAFs inspect web traffic | Explain which network/transport threat each addresses and why none substitutes for identity authorization. Treat “SSL/TLS” as source wording; use supported TLS in implementation |
 | DLP, governance, guardrails and auditability | [F10](../F10-Security-and-Governance/README.md) and [F14](../F14-Responsible-AI-and-Safety/README.md): DLP controls sensitive-data movement; security and safety guardrails have different purposes | Provide an approval record, redacted audit trail and control evidence rather than a list of enabled products |
 | Segregation of duties and approval gates | F10 governance and F06 execution: separate requester, approver and executor where required | Demonstrate a prohibited self-approval, an expired approval and the evidence linking approval to the exact action |
 | Google IAM, VPC and CMEK | Cross-cloud comparison: permissions, private network structure, and customer-managed encryption keys respectively | Map the concepts to Azure RBAC, VNet and customer-managed keys without claiming identical semantics; verify Google implementation details before building |
 
-### Study priority and evidence boundary
+## One request, end to end
 
-- [ ] First learn the explicit vocabulary cold: OIDC versus SAML, RBAC, IAM, Zero Trust and secure-by-design. Explain each without assuming prior identity knowledge.
-- [ ] Then defend the design: application/agent identities, least privilege, Graph consent, OBO, MCP authentication and permission-aware retrieval.
-- [ ] Finally produce runtime evidence: actual actor and audience, permitted/denied calls, safe traces, and approval/audit records. Existing notes or samples are not completion evidence.
+Ayşe asks the assistant to refund £120 on `T-2041`.
 
-## Reading and scope
+| Step | What happens | Control | What enters the context, or what proves it |
+|---|---|---|---|
+| 1 | Ayşe signs into the web app | OIDC + PKCE, Conditional Access (MFA, compliant device) | Session; sign-in log |
+| 2 | Web app calls the Foundry agent | Web app's app registration holds `Foundry Agent Consumer` | Trace starts; correlation ID |
+| 3 | Agent retrieves the refund policy | Retrieval MI with `Search Index Data Reader`; filter from Ayşe's validated groups | Only chunks Ayşe may read; filter hash logged |
+| 4 | Model proposes `issue_refund(T-2041, 120, GBP)` | The prompt guides the proposal; `require_approval` on the tool | `mcp_approval_request` in the trace |
+| 5 | Agent Service obtains a token for the ticket API | Blueprint → agent identity → audience-scoped token | No credential in the project; token not logged |
+| 6 | Ticket server validates the token | `iss`, `aud`, `exp`, `roles`/`scp` via JWKS middleware | `401` or continue |
+| 7 | Server checks `tickets.refund` and Ayşe's entitlement | Scope-to-tool map in code; delegation carries Ayşe | `403 insufficient_scope`: Ayşe holds `tickets.read` only |
+| 8 | Mert approves from his own session | Separate requester and approver; approval bound to ticket, amount, currency | Approval record with expiry |
+| 9 | Executor performs the refund | Backend rechecks preconditions; idempotent operation key | Receipt from the backend, not the model's summary |
+| 10 | Everything is reconstructable | Correlation ID joins sign-in, trace, gateway and backend logs; no tokens | Audit query for the panel |
 
-Source review: 30 October 2026. Read the local `documentation/INDEX.md` identity study path and `documentation/REFRESH-REPORT.md` coverage limits. Local article sections used here include **Delegated access** in permissions/consent, **Protocol diagram** in OBO, and **Token acquisition in hosted-agent code** in agent identity.
+What to notice: the model never held a credential, the refund was denied at step 7 for the person who asked and permitted at step 9 for the person entitled, and every hop names a different principal.
+
+## In twelve lines
+
+1. Entra holds identities; the application object defines, the service principal is, the managed identity has Azure hold its credential, the agent identity has the blueprint hold it.
+2. Credentials prove; role assignments and consent grants permit; they live on different objects.
+3. A token is valid when signature, issuer, audience and expiry pass; it is useful when `scp` or `roles` carry what the tool needs; it is authorised when your code says so.
+4. Delegated scopes are the user narrowed by the app; application roles are the app alone, admin-consented.
+5. Keyless means managed identity in the runtime, federation in CI, CLI on the laptop, and the chain pinned.
+6. Each Foundry agent gets its own blueprint and identity; the shared project identity is for prototypes and legacy agents.
+7. Agent Service exchanges the blueprint credential for an agent-identity token, then for an audience-scoped token; the tool validates that and checks the agent's grants.
+8. Control-plane roles do not grant data access; the role names are the vocabulary of the panel.
+9. OBO redeems a token whose audience is you for a token whose audience is the next API, as the same user; never a different audience, never a silent app-only retry.
+10. Your MCP server publishes its metadata, validates locally, maps scopes to tools in code and never forwards the inbound token.
+11. Sign-in protocols prove the person; access tokens authorise the call; neither ID token nor SAML assertion is a tool token.
+12. Zero Trust is a table: identity, device, network, application, data, visibility, one Azure control each, and a denied run per row.
+
+## What you should be able to explain
+
+The object chain with credential and assignment arrows, in three minutes. The claim table for a token hitting your server, from memory. The grant-to-situation mapping, spoken. The Agent ID objects and the two-step exchange. The three options at the tool boundary with one failure each. The role names for OpenAI, Foundry, Search, Storage and Key Vault. The OBO audience rule and one failure. The MCP spec's four requirements and Entra's answer to each. The six planes with a control each and the A3 component table. The six golden answers, back to back, in eighteen minutes.
+
+## What this is not
+
+Not an authorisation server of your own (dropped 17 October, no value). Not DCR or CIMD against Entra. Not SAML federation setup, B2C or External ID. Not Agent 365 administration beyond the awareness paragraph. Not Copilot Studio DLP or Power Platform identity (F11). Not retrieval implementation and quality (F07). Not network topology (F02). Not APIM gateway policy depth (F09). Not AWS Cognito or AgentCore Identity (S08.03, after this module). Not Terraform.
+
+## Implementation scope and versions
+
+MCP authorization is described at specification revision 2025-11-25; the S03.03 server pins `mcp 1.26.0`. Foundry pages (agent identity concepts, MCP authentication, RBAC) and the Entra agent identities page were read on 30 October 2026 and describe preview-era object names that change; relabel rather than redesign. `azure-identity` 1.23 introduced `AZURE_TOKEN_CREDENTIALS=prod|dev` and 1.24 the single-credential form. Nothing in this chapter has been run; sketches compile and are untested; the S03.03 tests are the only executed identity code in the repo as of this date.
+
+## Further reading
+
+Protocol contract: [MCP authorization, 2025-11-25](https://modelcontextprotocol.io/specification/2025-11-25/basic/authorization); [MCP security best practices](https://modelcontextprotocol.io/specification/2025-11-25/basic/security_best_practices); [OAuth 2.1 draft 13](https://datatracker.ietf.org/doc/html/draft-ietf-oauth-v2-1-13); [RFC 9728 Protected Resource Metadata](https://datatracker.ietf.org/doc/html/rfc9728); [RFC 8707 Resource Indicators](https://www.rfc-editor.org/rfc/rfc8707.html).
+
+Entra and Foundry: [agent identity concepts in Foundry](https://learn.microsoft.com/en-us/azure/foundry/agents/concepts/agent-identity); [Foundry MCP authentication](https://learn.microsoft.com/en-us/azure/foundry/agents/how-to/mcp-authentication); [Entra agent identities](https://learn.microsoft.com/en-us/entra/agent-id/agent-identities); [Foundry RBAC](https://learn.microsoft.com/en-us/azure/foundry/concepts/rbac-foundry); [OBO flow](https://learn.microsoft.com/en-us/entra/identity-platform/v2-oauth2-on-behalf-of-flow); [access-token claims](https://learn.microsoft.com/en-us/entra/identity-platform/access-token-claims-reference); [Agent 365 overview](https://learn.microsoft.com/en-us/microsoft-agent-365/overview).
+
+Platform docs used in the original sections:
 
 - [Applications and service principals](https://learn.microsoft.com/en-us/entra/identity-platform/app-objects-and-service-principals)
 - [Permissions and consent](https://learn.microsoft.com/en-us/entra/identity-platform/permissions-consent-overview)
@@ -429,4 +757,10 @@ Source review: 30 October 2026. Read the local `documentation/INDEX.md` identity
 - [Search document-level access](https://learn.microsoft.com/en-us/azure/search/search-document-level-access-overview)
 - [Secure MCP servers in APIM](https://learn.microsoft.com/en-us/azure/api-management/secure-mcp-servers)
 
-Continue with [F04 deployment authentication](../F04-Foundry-SDKs-and-Deployment/README.md), [F06 applied tooling](../F06-Agent-Tooling-MCP-and-Integration/README.md), and [F07 retrieval](../F07-RAG-on-AI-Search/README.md). No learner functions, adapters or tests are supplied by this chapter.
+Evidence and incidents: [Midnight Blizzard guidance, January 2024](https://www.microsoft.com/en-us/security/blog/2024/01/25/midnight-blizzard-guidance-for-responders-on-nation-state-attack/); [Storm-0558 key acquisition, September 2023](https://www.microsoft.com/en-us/msrc/blog/2023/09/results-of-major-technical-investigations-for-storm-0558-key-acquisition); [GitHub MCP exfiltration, May 2025](https://invariantlabs.ai/blog/mcp-github-vulnerability).
+
+Code to read: [azure-identity credential chains](https://learn.microsoft.com/en-us/azure/developer/python/sdk/authentication/credential-chains); [azure-identity README](https://learn.microsoft.com/en-us/python/api/overview/azure/identity-readme); [APIM `validate-azure-ad-token`](https://learn.microsoft.com/en-us/azure/api-management/validate-azure-ad-token-policy); the [S03.03 tests](../../Agent-Build-01-Fundamentals/S03-AI-Agents-Tools-and-MCP/S03.03-MCP-OAuth2.1/tests/test_http_authorization.py).
+
+Continue with [F04 deployment authentication](../F04-Foundry-SDKs-and-Deployment/README.md), [F06 applied tooling](../F06-Agent-Tooling-MCP-and-Integration/README.md), and [F07 retrieval](../F07-RAG-on-AI-Search/README.md).
+
+**Status, 30 October 2026:** design proposal and teaching text. Sources fetched and dated above; items marked "general knowledge" are unverified. No exercise logged, no denied-access run recorded, companion files are templates. Scores unassessed.
