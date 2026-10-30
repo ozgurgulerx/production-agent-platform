@@ -951,6 +951,18 @@ Collected 30 October 2026 from the project's own question catalogue and seven pu
 
 **A hospital assistant reads patient summaries through MCP. How do you design access?** Say: delegated identity only (the clinician's entitlements decide), OBO to the clinical system, break-glass as a separate audited identity, permission-aware retrieval, no app-only read of records, audit trail per access, residency and CMK as the data officer requires. See Sections 6, 7, 10.
 
+### Candidate-reported, as of 30 October 2026
+
+The public record of what Microsoft and bank panels actually ask on identity is thin; everything above is editorial preparation material unless listed here. Add every real question you are asked, with the loop and date, so this bank becomes first-hand.
+
+| Reported question | Loop and date | Source | Answered in |
+|---|---|---|---|
+| "What is conditional access?" | Microsoft Cloud Solution Architect, 6 Aug 2026 | [Glassdoor](https://www.glassdoor.com/Interview/Microsoft-Cloud-Solution-Architect-Interview-Questions-EI_IE1651.0,9_KO10,34.htm), 5 of 78 reports visible | Sections 10, 14 |
+| Design a RAG system over internal financial regulatory documents so that user access controls are maintained at the vector level | Citi GenAI engineer; listed as illustrative on a page that describes its other items as candidate-reported | [Dataford](https://dataford.io/interview-guides/citi/genai-engineer) | Section 6 |
+| | | | |
+
+Practitioner writing that shows what clients argue about, not interview transcripts: Softwire, [Did you just give GenAI top secret security clearance?](https://www.softwire.com/perspectives/did-you-just-give-genai-top-secret-security-clearance) (12 February 2025): compartmentalise repositories by classification and never give the assistant super-user reach; prompt instructions are a supplementary control.
+
 ### Sources for the bank
 
 Project catalogue `ai_interview_questions.md` (U053, U098, U105); [Cloud Soft Solutions: AI security](https://cloudsoftsol.com/blog/ai-security-interview-questions), [enterprise AI](https://cloudsoftsol.com/blog/enterprise-ai-interview-questions/), [Azure AI](https://cloudsoftsol.com/blog/azure-ai-interview-questions-answers/) and [MCP](https://cloudsoftsol.com/blog/mcp-interview-questions) banks; [Okta agentic AI engineer guide](https://dataford.io/interview-guides/okta/agentic-ai-engineer); [PracHub AI security questions](https://prachub.com/resources/ai-security-interview-questions-prompt-injection-data-leakage-model-abuse-and-guardrails); [Security Scientist GenAI access control](https://www.securityscientist.net/blog/12-questions-and-answers-about-genai-access-control/). All read 30 October 2026. These are preparation sites, not transcripts of real loops; treat the wording as representative and the Azure answers above as yours to defend.
